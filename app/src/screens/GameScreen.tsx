@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Controls } from '../components/Controls';
 import { CountModal } from '../components/CountModal';
 import { DeckTipModal } from '../components/DeckTipModal';
+import { GameMenuModal } from '../components/GameMenuModal';
 import { OutOfChipsModal } from '../components/OutOfChipsModal';
 import { ExplainModal } from '../components/ExplainModal';
 import { ChanceIcon } from '../components/Icons';
@@ -68,12 +69,35 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
   const close = useCallback(() => setModal(null), []);
   useSoundEffects();
   const chance = showChance ? chanceLevel(trueCountOf(s.runningCount, unseenCards(s).length)) : 0;
+  const [menu, setMenu] = useState(false);
+
+  const confirmReset = () => {
+    const mid = s.phase !== 'betting' && s.phase !== 'roundOver';
+    if (window.confirm(`シャッフルして、カウントを0に戻します(チップはそのまま)。${mid ? 'このラウンドは中止になり、賭けたチップは戻ります。' : ''}よろしいですか?`)) s.reset();
+  };
+
+  const chipsPill = (
+    <div className="flex items-baseline gap-1.5 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
+      <span className="text-[11px] text-neutral-400">所持チップ</span>
+      <span className="text-base font-extrabold tabular-nums text-amber-300 sm:text-lg">{fmt(s.bankroll)}</span>
+    </div>
+  );
+  const chanceBadge =
+    chance > 0 ? (
+      <span
+        className={`${chance === 2 ? 'chance-badge-inline' : 'chance-badge-maybe'} pointer-events-none flex items-center gap-1 whitespace-nowrap rounded-full py-0.5 pl-1 pr-2 text-[11px] font-black italic tracking-wide`}
+      >
+        <ChanceIcon kind={chance === 2 ? 'sure' : 'maybe'} size={16} />
+        {chance === 2 ? 'chance!' : 'chance?'}
+      </span>
+    ) : null;
 
   return (
     <>
-      <ScreenHeader title="ゲーム" onHome={onHome}>
-        <label className="flex items-center gap-1 text-xs text-neutral-400">
-          <span className="hidden sm:inline">デッキ</span>
+      <ScreenHeader title="ゲーム" onHome={onHome} hideSoundOnMobile>
+        {/* PC: デッキ数とリセットをヘッダーに並べる */}
+        <label className="hidden items-center gap-1 text-xs text-neutral-400 sm:flex">
+          デッキ
           <select
             value={s.deckCount}
             onChange={(e) => changeDecks(Number(e.target.value))}
@@ -89,37 +113,53 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
         </label>
         <button
           type="button"
-          onClick={() => {
-            const mid = s.phase !== 'betting' && s.phase !== 'roundOver';
-            if (window.confirm(`シャッフルして、カウントを0に戻します(チップはそのまま)。${mid ? 'このラウンドは中止になり、賭けたチップは戻ります。' : ''}よろしいですか?`)) s.reset();
-          }}
-          className="rounded-md bg-neutral-800 px-3 py-1.5 text-sm font-semibold ring-1 ring-white/15 hover:bg-neutral-700"
+          onClick={confirmReset}
+          className="hidden rounded-md bg-neutral-800 px-3 py-1.5 text-sm font-semibold ring-1 ring-white/15 hover:bg-neutral-700 sm:block"
         >
           リセット
         </button>
+        {/* スマホ: スパナから設定を開く(ヘッダーを散らかさない) */}
+        <button
+          type="button"
+          onClick={() => setMenu(true)}
+          className="flex items-center gap-1 whitespace-nowrap rounded-md bg-neutral-800 px-2.5 py-1.5 text-sm font-semibold ring-1 ring-white/15 sm:hidden"
+          aria-label="ゲームの設定(デッキ数・CPU・効果音・リセット)"
+        >
+          <span aria-hidden>🔧</span>
+          <span className="text-xs text-neutral-300">{s.deckCount}デッキ</span>
+        </button>
       </ScreenHeader>
 
-      {/* スマホでは、所持チップ・解説・COUNT をテーブルの上に置き、画面の下は操作ボタンだけにする(PC ではテーブルの下) */}
       <div className="flex flex-col">
-        <div className="mx-auto mb-2 flex w-full max-w-[1000px] items-center justify-between gap-2 sm:order-2 sm:mb-0 sm:mt-3">
-          <div className="flex items-baseline gap-1.5 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
-            <span className="text-[11px] text-neutral-400">所持チップ</span>
-            <span className="text-base font-extrabold tabular-nums text-amber-300 sm:text-lg">{fmt(s.bankroll)}</span>
-          </div>
+        {/* スマホ: 解説と COUNT を、テーブルの上に同じ幅で2つ並べる */}
+        <div className="mb-2 grid grid-cols-2 gap-2 sm:hidden">
+          <button
+            type="button"
+            onClick={() => setModal('explain')}
+            disabled={s.roundLog.length === 0}
+            className="min-h-10 rounded-xl bg-neutral-700 text-sm font-extrabold tracking-wide shadow-lg ring-1 ring-white/15 disabled:opacity-35"
+          >
+            解説
+          </button>
+          <button
+            type="button"
+            onClick={() => setModal('count')}
+            className={`min-h-10 rounded-xl bg-gradient-to-b from-sky-500 to-sky-700 text-sm font-extrabold tracking-widest shadow-lg ring-1 ring-sky-300/40 ${chance === 2 ? 'chance-glow' : ''}`}
+          >
+            COUNT
+          </button>
+        </div>
+
+        {/* PC: 所持チップ・chance・解説・COUNT をテーブルの下に1行で */}
+        <div className="order-2 mx-auto mt-3 hidden w-full max-w-[1000px] items-center justify-between gap-2 sm:flex">
+          {chipsPill}
           <div className="flex items-center gap-1.5">
-            {chance > 0 && (
-              <span
-                className={`${chance === 2 ? 'chance-badge-inline' : 'chance-badge-maybe'} pointer-events-none flex items-center gap-1 whitespace-nowrap rounded-full py-0.5 pl-1 pr-2 text-[11px] font-black italic tracking-wide`}
-              >
-                <ChanceIcon kind={chance === 2 ? 'sure' : 'maybe'} size={16} />
-                {chance === 2 ? 'chance!' : 'chance?'}
-              </span>
-            )}
+            {chanceBadge}
             <button
               type="button"
               onClick={() => setModal('explain')}
               disabled={s.roundLog.length === 0}
-              className="rounded-lg bg-neutral-700 px-3 py-2 text-sm font-extrabold tracking-wide shadow-lg ring-1 ring-white/15 hover:bg-neutral-600 disabled:opacity-35 sm:py-2.5"
+              className="rounded-lg bg-neutral-700 px-3 py-2.5 text-sm font-extrabold tracking-wide shadow-lg ring-1 ring-white/15 hover:bg-neutral-600 disabled:opacity-35"
               title="このラウンドのカウントの手順を、1枚ずつ解説します"
             >
               解説
@@ -127,7 +167,7 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
             <button
               type="button"
               onClick={() => setModal('count')}
-              className={`rounded-lg bg-gradient-to-b from-sky-500 to-sky-700 px-4 py-2 text-sm font-extrabold tracking-widest shadow-lg ring-1 ring-sky-300/40 hover:from-sky-400 sm:py-2.5 ${chance === 2 ? 'chance-glow' : ''}`}
+              className={`rounded-lg bg-gradient-to-b from-sky-500 to-sky-700 px-4 py-2.5 text-sm font-extrabold tracking-widest shadow-lg ring-1 ring-sky-300/40 hover:from-sky-400 ${chance === 2 ? 'chance-glow' : ''}`}
             >
               COUNT
             </button>
@@ -138,10 +178,17 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
           <Table />
         </div>
 
-        <p className="order-3 mx-auto mt-1.5 min-h-[2.5em] max-w-[1000px] text-center text-xs leading-snug text-emerald-50/90 sm:mt-2 sm:min-h-0 sm:text-sm" aria-live="polite">
+        <p className="order-3 mx-auto mt-2 hidden max-w-[1000px] text-center text-sm leading-snug text-emerald-50/90 sm:block" aria-live="polite">
           {s.justShuffled && s.phase === 'betting' && <span className="mr-1 rounded bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold">SHUFFLED</span>}
           {s.message}
         </p>
+
+        {/* スマホ: 所持チップと chance は、操作ボタンのすぐ上 */}
+        <div className="order-3 mb-1.5 mt-1.5 flex items-center gap-2 sm:hidden">
+          <div className="shrink-0">{chipsPill}</div>
+          <p className="line-clamp-2 min-w-0 flex-1 text-[11px] leading-snug text-emerald-50/90" aria-live="polite">{s.message}</p>
+          <div className="shrink-0">{chanceBadge}</div>
+        </div>
 
         <div className="order-4 mx-auto mt-1 w-full max-w-[1000px] sm:mt-3">
           <Controls onNeedChips={() => setShowOut(true)} />
@@ -150,6 +197,7 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
         <div className="order-5 h-5 sm:hidden" aria-hidden />
       </div>
 
+      {menu && <GameMenuModal onClose={() => setMenu(false)} onDecks={changeDecks} onReset={confirmReset} />}
       {modal === 'count' && <CountModal onClose={close} showChance={showChance} />}
       {modal === 'explain' && <ExplainModal onClose={close} />}
       {deckTip && !showOut && <DeckTipModal deckCount={s.deckCount} onChoose={chooseDeck} />}

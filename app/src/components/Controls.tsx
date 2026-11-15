@@ -24,7 +24,7 @@ function Btn({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`min-w-[72px] rounded-lg px-3 py-2 text-sm sm:py-2.5 font-bold tracking-wide shadow transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35 ${tones[tone]}`}
+      className={`min-h-12 min-w-[72px] rounded-xl px-3 py-2 text-base sm:min-h-0 sm:rounded-lg sm:py-2.5 sm:text-sm font-bold tracking-wide shadow transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35 ${tones[tone]}`}
     >
       {children}
     </button>
@@ -72,7 +72,8 @@ export function Controls({ onNeedChips }: { onNeedChips: () => void }) {
     const canDouble = hand.cards.length === 2 && !hand.splitAces && s.bankroll >= hand.bet;
     const canSplit = isPair(hand.cards) && !hand.splitAces && s.hands.length < MAX_HANDS && s.bankroll >= hand.bet;
     body = (
-      <div className="flex flex-wrap justify-center gap-2">
+      // 1行目に HIT・STAND(よく押す)、2行目に DOUBLE・SPLIT
+      <div className="grid w-full max-w-sm grid-cols-2 gap-2 px-2">
         <Btn tone="primary" onClick={s.hit}>HIT</Btn>
         <Btn tone="danger" onClick={s.stand}>STAND</Btn>
         <Btn tone="info" onClick={s.double} disabled={!canDouble}>DOUBLE</Btn>

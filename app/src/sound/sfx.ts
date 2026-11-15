@@ -69,7 +69,8 @@ function noise(start: number, dur: number, vol = 0.25, freq = 2500) {
 }
 
 export const sfx = {
-  card: () => noise(0, 0.07, 0.35, 3000),
+  // カードを引く音: 音量を約半分に、こもった低めの音に(高い音は耳ざわりなため)
+  card: () => noise(0, 0.08, 0.16, 1100),
   chip: () => {
     tone(2400, 0, 0.05, 'triangle', 0.12);
     tone(3100, 0.03, 0.05, 'triangle', 0.08);
