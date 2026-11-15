@@ -5,6 +5,9 @@ import { hiLoValue } from '../game/count';
 import { makeQuiz, signed, type ChangeQ, type CountQ, type ProbQ, type Question, type QuizMode, type TcQ } from '../quiz/questions';
 import { sfx } from '../sound/sfx';
 import { QUIZ_SPEED_MS, useSettings } from '../store/useSettings';
+import { studyLeftToday, useWallet } from '../store/useWallet';
+import { QUIZ_PERFECT_BONUS, QUIZ_REWARD, SPEED_REWARD, STUDY_DAILY_CAP } from '../store/wallet';
+import { SpeedTraining } from '../components/SpeedTraining';
 import { ScreenHeader } from './ScreenHeader';
 
 const MODES: { mode: QuizMode; icon: string; label: string; sub: string }[] = [
@@ -204,6 +207,13 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
   const [picked, setPicked] = useState<string | null>(null);
   const [results, setResults] = useState<boolean[]>([]);
   const [ready, setReady] = useState(false);
+  // このクイズでかせいだ所持金
+  const [earned, setEarned] = useState(0);
+  const [lastGain, setLastGain] = useState(0);
+  const [perfectGain, setPerfectGain] = useState(0);
+  const [training, setTraining] = useState(false);
+  const earnStudy = useWallet((w) => w.earnStudy);
+  const left = studyLeftToday(useWallet());
 
   const start = (m: QuizMode) => {
     setMode(m);
@@ -212,13 +222,23 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
     setPicked(null);
     setResults([]);
     setReady(false);
+    setEarned(0);
+    setPerfectGain(0);
   };
 
   const q = questions[idx];
   const finished = mode !== null && idx >= questions.length;
 
   useEffect(() => {
-    if (finished) sfx.finish();
+    if (!finished) return;
+    sfx.finish();
+    // 全問正解のボーナス
+    if (results.length > 0 && results.every(Boolean)) {
+      const g = useWallet.getState().earnStudy(QUIZ_PERFECT_BONUS);
+      setPerfectGain(g);
+      setEarned((e) => e + g);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished]);
 
   const choose = (c: string) => {
@@ -226,8 +246,15 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
     const ok = c === q.answer;
     setPicked(c);
     setResults((r) => [...r, ok]);
-    if (ok) sfx.correct();
-    else sfx.wrong();
+    if (ok) {
+      sfx.correct();
+      const g = earnStudy(QUIZ_REWARD);
+      setLastGain(g);
+      setEarned((e) => e + g);
+    } else {
+      setLastGain(0);
+      sfx.wrong();
+    }
   };
 
   const next = () => {
@@ -238,14 +265,21 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
 
   const score = results.filter(Boolean).length;
 
+  if (training) return <SpeedTraining onExit={() => setTraining(false)} onHome={onHome} />;
+
   // モード選択
   if (mode === null) {
     return (
       <>
         <ScreenHeader title="クイズモード" onHome={onHome} />
         <div className="mx-auto max-w-xl">
-          <p className="mb-3 text-center text-sm text-neutral-300">どのクイズに挑戦する?({quizCount}問。問題数は設定で変えられます)</p>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="mb-3 rounded-xl bg-emerald-900/40 px-3 py-2 text-center text-xs leading-relaxed text-emerald-100 ring-1 ring-emerald-300/30">
+            💰 正解すると所持金がもらえます(1問 +{QUIZ_REWARD}、全問正解で +{QUIZ_PERFECT_BONUS}、トレーニングは1回 +{SPEED_REWARD})
+            <br />
+            今日あと <b className="text-base tabular-nums">{left.toLocaleString()}</b> まで(1日 {STUDY_DAILY_CAP.toLocaleString()} まで)
+          </div>
+          <p className="mb-2 text-center text-sm text-neutral-300">どのクイズに挑戦する?({quizCount}問。問題数は設定で変えられます)</p>
+          <div className="grid grid-cols-2 gap-2">
             {MODES.map((m) => (
               <button
                 key={m.mode}
@@ -254,20 +288,38 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
                   sfx.chip();
                   start(m.mode);
                 }}
-                className={`flex items-center gap-3 rounded-2xl p-4 text-left ring-1 transition hover:-translate-y-0.5 ${
-                  m.mode === 'all' ? 'bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950 ring-amber-200 sm:col-span-2' : 'bg-neutral-800 ring-white/15 hover:bg-neutral-700'
+                className={`flex items-center gap-2 rounded-2xl p-3 text-left ring-1 transition hover:-translate-y-0.5 sm:gap-3 sm:p-4 ${
+                  m.mode === 'all' ? 'col-span-2 bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950 ring-amber-200' : 'bg-neutral-800 ring-white/15 hover:bg-neutral-700'
                 }`}
               >
-                <span className="text-3xl" aria-hidden>
+                <span className="text-2xl sm:text-3xl" aria-hidden>
                   {m.icon}
                 </span>
                 <span>
-                  <span className="block font-black">{m.label}</span>
-                  <span className={`block text-xs ${m.mode === 'all' ? 'text-amber-900/80' : 'text-neutral-400'}`}>{m.sub}</span>
+                  <span className="block text-sm font-black sm:text-base">{m.label}</span>
+                  <span className={`block text-[10px] leading-snug sm:text-xs ${m.mode === 'all' ? 'text-amber-900/80' : 'text-neutral-400'}`}>{m.sub}</span>
                 </span>
               </button>
             ))}
           </div>
+
+          <h2 className="mb-2 mt-3 text-xs font-bold tracking-widest text-sky-300 sm:mt-5">トレーニング</h2>
+          <button
+            type="button"
+            onClick={() => {
+              sfx.chip();
+              setTraining(true);
+            }}
+            className="flex w-full items-center gap-3 rounded-2xl bg-gradient-to-b from-sky-600 to-sky-800 p-4 text-left ring-1 ring-sky-300/40 transition hover:-translate-y-0.5"
+          >
+            <span className="text-3xl" aria-hidden>
+              ⚡
+            </span>
+            <span>
+              <span className="block font-black">30秒スピード点数</span>
+              <span className="block text-xs text-sky-100/80">出てくるカードを +1・0・−1 にすばやく分けよう。何枚できるかな?</span>
+            </span>
+          </button>
         </div>
       </>
     );
@@ -287,6 +339,11 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
           </div>
           <div className="text-4xl font-black tabular-nums">
             {score} <span className="text-xl text-neutral-400">/ {questions.length}問 せいかい</span>
+          </div>
+          <div className="rounded-xl bg-emerald-900/40 px-4 py-2 text-sm text-emerald-100 ring-1 ring-emerald-300/30">
+            💰 かせいだ所持金 <b className="text-lg tabular-nums">+{earned.toLocaleString()}</b>
+            {perfectGain > 0 && <span className="ml-1 text-xs">(全問正解ボーナス +{perfectGain} をふくむ)</span>}
+            <div className="text-[11px] text-emerald-100/70">今日あと {left.toLocaleString()} までかせげます</div>
           </div>
           <p className="text-sm text-neutral-300">{stars === 3 ? 'すばらしい!カウントの達人です!' : stars === 2 ? 'いい調子!もう少しで満点!' : 'まちがえた問題の解説を見て、もう一度挑戦しよう!'}</p>
           <div className="flex flex-wrap justify-center gap-1">
@@ -369,6 +426,7 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
                 <span className={`${ok ? 'result-green' : 'result-red'} text-3xl font-black italic`}>{ok ? 'せいかい!' : 'ざんねん…'}</span>
               </div>
             </div>
+            {ok && <p className="text-center text-sm text-emerald-200">{lastGain > 0 ? `💰 所持金 +${lastGain}` : '今日かせげる所持金は、上限に達しました'}</p>}
             {!ok && <p className="text-center text-sm">正解は <b className="text-emerald-300">{q.answer}</b></p>}
             <div className="rounded-2xl bg-neutral-900/80 p-4 text-sm leading-relaxed ring-1 ring-white/10">
               <div className="mb-2 text-xs font-bold tracking-widest text-sky-300">かいせつ</div>

@@ -14,9 +14,33 @@ export type Wallet = {
   money: number;
   /** 最後にログインボーナスを受け取った日(YYYY-MM-DD、端末の日付) */
   lastBonus: string | null;
+  /** クイズ・トレーニングでかせいだ日と、その日にかせいだ所持金(1日の上限の判定に使う) */
+  studyDay: string | null;
+  studyEarned: number;
 };
 
-export const DEFAULT_WALLET: Wallet = { chips: INITIAL_CHIPS, money: 0, lastBonus: null };
+/** クイズ1問正解でもらえる所持金 */
+export const QUIZ_REWARD = 100;
+/** クイズ全問正解のボーナス */
+export const QUIZ_PERFECT_BONUS = 500;
+/** トレーニング(スピード点数)1回正解でもらえる所持金 */
+export const SPEED_REWARD = 10;
+/** クイズ・トレーニングでかせげる所持金の、1日の上限 */
+export const STUDY_DAILY_CAP = 10000;
+
+/** 今日あといくらかせげるか */
+export function studyLeft(w: Pick<Wallet, 'studyDay' | 'studyEarned'>, today: string): number {
+  return Math.max(0, STUDY_DAILY_CAP - (w.studyDay === today ? w.studyEarned : 0));
+}
+
+/** かせいだ所持金を、1日の上限までで足す。実際に足した額を返す */
+export function grantStudy(w: Pick<Wallet, 'studyDay' | 'studyEarned'>, amount: number, today: string): { granted: number; studyDay: string; studyEarned: number } {
+  const granted = Math.max(0, Math.min(amount, studyLeft(w, today)));
+  const base = w.studyDay === today ? w.studyEarned : 0;
+  return { granted, studyDay: today, studyEarned: base + granted };
+}
+
+export const DEFAULT_WALLET: Wallet = { chips: INITIAL_CHIPS, money: 0, lastBonus: null, studyDay: null, studyEarned: 0 };
 
 const KEY = 'prob21-wallet';
 
@@ -57,6 +81,8 @@ export function loadWallet(): Wallet {
       chips: isNum(w.chips) ? w.chips : DEFAULT_WALLET.chips,
       money: isNum(w.money) ? w.money : DEFAULT_WALLET.money,
       lastBonus: typeof w.lastBonus === 'string' ? w.lastBonus : null,
+      studyDay: typeof w.studyDay === 'string' ? w.studyDay : null,
+      studyEarned: isNum(w.studyEarned) ? w.studyEarned : 0,
     };
   } catch {
     return DEFAULT_WALLET;

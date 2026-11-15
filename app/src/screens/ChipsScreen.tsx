@@ -4,8 +4,8 @@ import { sfx } from '../sound/sfx';
 import { chipsAtStake, useGameStore } from '../store/useGameStore';
 import { displayName } from '../store/profile';
 import { useProfile } from '../store/useProfile';
-import { bonusAvailable, useWallet } from '../store/useWallet';
-import { EXCHANGE_STEP, exchangeRange, LOGIN_BONUS, MONEY_PER_CHIP } from '../store/wallet';
+import { bonusAvailable, studyLeftToday, useWallet } from '../store/useWallet';
+import { EXCHANGE_STEP, exchangeRange, LOGIN_BONUS, MONEY_PER_CHIP, QUIZ_REWARD } from '../store/wallet';
 import type { Screen } from './HomeScreen';
 import { ScreenHeader } from './ScreenHeader';
 
@@ -45,6 +45,8 @@ function Records({ chips, money }: { chips: number; money: number }) {
         <StatRow label="遊んだラウンド" value={`${fmt(st.rounds)}回`} sub={`勝ち ${st.wins} ・ 負け ${st.losses} ・ 引き分け ${st.pushes}`} />
         <StatRow label="1回でいちばん多く勝ったチップ" value={fmt(st.bestWin)} />
         <StatRow label="受け取ったログインボーナス" value={fmt(st.bonusTotal)} />
+        <StatRow label="クイズ・トレーニングでかせいだ所持金" value={fmt(st.studyTotal)} />
+        <StatRow label="30秒スピード点数の最高記録" value={`${st.bestSpeed}枚`} />
       </div>
       <p className="mt-2 text-[11px] text-neutral-500">いまの持ち物:チップ {fmt(chips)} ・ 所持金 {fmt(money)}</p>
     </div>
@@ -106,6 +108,7 @@ export function ChipsScreen({ go, reason }: { go: (s: Screen) => void; reason?: 
   const midRound = useGameStore((s) => s.phase !== 'betting' && s.phase !== 'roundOver');
   const { money, lastBonus, claimBonus, buyChips, sellChips } = useWallet();
   const canBonus = bonusAvailable(lastBonus);
+  const studyLeft = studyLeftToday(useWallet());
   const [notice, setNotice] = useState<string | null>(null);
   const [panel, setPanel] = useState<'exchange' | 'records' | null>(null);
   const closePanel = useCallback(() => setPanel(null), []);
@@ -154,18 +157,26 @@ export function ChipsScreen({ go, reason }: { go: (s: Screen) => void; reason?: 
             </div>
             <div className="mt-1 text-2xl font-black tracking-widest text-neutral-200">とほほ…</div>
             <p className="mt-2 text-sm leading-relaxed text-neutral-300">
-              チップも所持金も、なくなってしまいました。
+              チップがなくなり、所持金もチップにかえられるほど残っていません。
               <br />
               ログインボーナスは<b className="text-amber-200">1日1回</b>。あした、また受け取れます。
             </p>
             <p className="mt-3 rounded-xl bg-black/30 px-3 py-2 text-xs leading-relaxed text-neutral-400">
               お金は、使えばなくなります。遊ぶ前に「今日はここまで」と決めておくのが大切です。
               <br />
-              そのあいだに、クイズでカウントの練習をしておこう!
             </p>
-            <button type="button" onClick={() => go('quiz')} className="mt-3 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-bold hover:bg-sky-500">
-              クイズモードへ
-            </button>
+            {studyLeft > 0 ? (
+              <>
+                <p className="mt-2 text-xs text-emerald-200">
+                  💡 クイズやトレーニングで所持金をかせげます(1問正解で +{QUIZ_REWARD}、今日あと {studyLeft.toLocaleString()} まで)
+                </p>
+                <button type="button" onClick={() => go('quiz')} className="mt-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black hover:bg-emerald-500">
+                  クイズで所持金をかせぐ
+                </button>
+              </>
+            ) : (
+              <p className="mt-2 text-xs text-neutral-400">今日クイズでかせげる所持金も、上限に達しました。また、あした!</p>
+            )}
           </div>
         )}
 

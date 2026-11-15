@@ -173,7 +173,7 @@ export function CountModal({ onClose, showChance = true }: { onClose: () => void
               </span>
             ))}
           </span>
-          のこりのカードを一覧で見る(七並べ)
+          のこりのカードを一覧で見る
         </button>
 
         {/* 出たカード */}

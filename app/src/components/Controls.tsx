@@ -31,6 +31,9 @@ function Btn({
   );
 }
 
+/** チップより下のボタンは、基本2列で並べる */
+const GRID = 'grid w-full max-w-sm grid-cols-2 gap-2 px-2';
+
 const fmt = (n: number) => (Number.isInteger(n) ? n.toLocaleString() : n.toFixed(1));
 
 export function Controls({ onNeedChips }: { onNeedChips: () => void }) {
@@ -47,23 +50,30 @@ export function Controls({ onNeedChips }: { onNeedChips: () => void }) {
 
   let body: React.ReactNode = null;
   if (s.phase === 'betting') {
+    // 2列に収めるため、左のボタンは状況で変える: チップが無い → チップを用意する / ベット中 → CLEAR / まだ置いていない → REBET
+    const needChips = s.bankroll < 1 && s.bet === 0;
+    const left = needChips ? (
+      <Btn tone="info" onClick={onNeedChips}>チップを用意する</Btn>
+    ) : s.bet > 0 ? (
+      <Btn onClick={s.clearBet}>CLEAR</Btn>
+    ) : (
+      <Btn onClick={s.rebet} disabled={s.lastBet === 0 || s.bankroll < s.lastBet}>
+        REBET {s.lastBet > 0 ? fmt(s.lastBet) : ''}
+      </Btn>
+    );
     body = (
       <>
         {chipRow}
-        <div className="flex flex-wrap justify-center gap-2">
-          <Btn onClick={s.clearBet} disabled={s.bet === 0}>CLEAR</Btn>
-          <Btn onClick={s.rebet} disabled={s.lastBet === 0 || s.bankroll + s.bet < s.lastBet}>
-            REBET {s.lastBet > 0 ? fmt(s.lastBet) : ''}
-          </Btn>
+        <div className={GRID}>
+          {left}
           <Btn tone="primary" onClick={s.deal} disabled={s.bet === 0}>DEAL</Btn>
-          {s.bankroll < 1 && s.bet === 0 && <Btn tone="info" onClick={onNeedChips}>チップを用意する</Btn>}
         </div>
       </>
     );
   } else if (s.phase === 'insurance') {
     const cost = (s.hands[0]?.bet ?? 0) / 2;
     body = (
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className={GRID}>
         <Btn tone="info" onClick={() => s.takeInsurance(true)}>INSURANCE ({fmt(cost)})</Btn>
         <Btn onClick={() => s.takeInsurance(false)}>NO</Btn>
       </div>
@@ -73,7 +83,7 @@ export function Controls({ onNeedChips }: { onNeedChips: () => void }) {
     const canSplit = isPair(hand.cards) && !hand.splitAces && s.hands.length < MAX_HANDS && s.bankroll >= hand.bet;
     body = (
       // 1行目に HIT・STAND(よく押す)、2行目に DOUBLE・SPLIT
-      <div className="grid w-full max-w-sm grid-cols-2 gap-2 px-2">
+      <div className={GRID}>
         <Btn tone="primary" onClick={s.hit}>HIT</Btn>
         <Btn tone="danger" onClick={s.stand}>STAND</Btn>
         <Btn tone="info" onClick={s.double} disabled={!canDouble}>DOUBLE</Btn>
@@ -87,19 +97,22 @@ export function Controls({ onNeedChips }: { onNeedChips: () => void }) {
     body = (
       <>
         {chipRow}
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className={GRID}>
           <Btn onClick={s.nextRound}>NEXT</Btn>
-          <Btn
-            tone="primary"
-            onClick={() => {
-              s.rebet();
-              s.deal();
-            }}
-            disabled={s.lastBet === 0 || s.bankroll < s.lastBet}
-          >
-            REBET &amp; DEAL {fmt(s.lastBet)}
-          </Btn>
-          {s.bankroll < 1 && <Btn tone="info" onClick={onNeedChips}>チップを用意する</Btn>}
+          {s.bankroll < 1 ? (
+            <Btn tone="info" onClick={onNeedChips}>チップを用意する</Btn>
+          ) : (
+            <Btn
+              tone="primary"
+              onClick={() => {
+                s.rebet();
+                s.deal();
+              }}
+              disabled={s.lastBet === 0 || s.bankroll < s.lastBet}
+            >
+              REBET &amp; DEAL {fmt(s.lastBet)}
+            </Btn>
+          )}
         </div>
       </>
     );

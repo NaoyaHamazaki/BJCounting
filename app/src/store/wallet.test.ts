@@ -31,3 +31,23 @@ describe('チップと所持金', () => {
     expect(exchangeRange(0, 20000)).toEqual({ min: 0, max: 1000 });
   });
 });
+
+describe('クイズ・トレーニングでかせぐ', () => {
+  it('1日 10,000 まで。上限をこえた分は足さない', async () => {
+    const { grantStudy, studyLeft, STUDY_DAILY_CAP } = await import('./wallet');
+    expect(STUDY_DAILY_CAP).toBe(10000);
+    let w = { studyDay: null as string | null, studyEarned: 0 };
+    let g = grantStudy(w, 9950, '2026-11-16');
+    expect(g.granted).toBe(9950);
+    w = g;
+    g = grantStudy(w, 100, '2026-11-16');
+    expect(g.granted).toBe(50);
+    expect(studyLeft(g, '2026-11-16')).toBe(0);
+  });
+  it('日付が変わると、また 10,000 までかせげる', async () => {
+    const { grantStudy, studyLeft } = await import('./wallet');
+    const w = { studyDay: '2026-11-16', studyEarned: 10000 };
+    expect(studyLeft(w, '2026-11-17')).toBe(10000);
+    expect(grantStudy(w, 100, '2026-11-17')).toEqual({ granted: 100, studyDay: '2026-11-17', studyEarned: 100 });
+  });
+});

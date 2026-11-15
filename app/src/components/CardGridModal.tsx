@@ -85,7 +85,7 @@ export function CardGridModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="text-base font-bold sm:text-lg">カード一覧(七並べ)</h2>
+          <h2 className="text-base font-bold sm:text-lg">のこりのカード一覧</h2>
           <button type="button" onClick={onClose} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold hover:bg-white/20">
             もどる
           </button>

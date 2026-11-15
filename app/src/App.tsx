@@ -21,6 +21,7 @@ export default function App() {
       {screen === 'game' && (
         <GameScreen
           onHome={home}
+          onQuiz={() => go('quiz')}
           onOutOfChips={() => {
             setChipsReason('empty');
             setScreen('chips');

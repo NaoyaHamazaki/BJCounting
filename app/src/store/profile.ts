@@ -16,6 +16,10 @@ export type Stats = {
   net: number;
   /** 1ラウンドでいちばん多く勝ったチップ */
   bestWin: number;
+  /** クイズ・トレーニングでかせいだ所持金の合計 */
+  studyTotal: number;
+  /** スピード点数(トレーニング)の最高記録 */
+  bestSpeed: number;
 };
 
 export type Profile = {
@@ -37,7 +41,7 @@ export type Profile = {
 /** 1〜2デッキをすすめるのは、このラウンド数以上遊んだ人だけ(はじめての人には伝えない) */
 export const DECK_TIP_MIN_ROUNDS = 5;
 
-export const EMPTY_STATS: Stats = { invested: 0, cashedOut: 0, bonusTotal: 0, rounds: 0, wins: 0, losses: 0, pushes: 0, net: 0, bestWin: 0 };
+export const EMPTY_STATS: Stats = { invested: 0, cashedOut: 0, bonusTotal: 0, rounds: 0, wins: 0, losses: 0, pushes: 0, net: 0, bestWin: 0, studyTotal: 0, bestSpeed: 0 };
 export const NAME_MAX = 12;
 
 const KEY = 'prob21-profile';

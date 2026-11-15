@@ -20,7 +20,7 @@ import { ScreenHeader } from './ScreenHeader';
 
 const fmt = (n: number) => (Number.isInteger(n) ? n.toLocaleString() : n.toFixed(1));
 
-export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOutOfChips: () => void }) {
+export function GameScreen({ onHome, onOutOfChips, onQuiz }: { onHome: () => void; onOutOfChips: () => void; onQuiz: () => void }) {
   const s = useGameStore();
   const showChance = useSettings((x) => x.showChance);
   const updateSettings = useSettings((x) => x.update);
@@ -184,7 +184,7 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
         </p>
 
         {/* スマホ: 所持チップと chance は、操作ボタンのすぐ上 */}
-        <div className="order-3 mb-1.5 mt-1.5 flex items-center gap-2 sm:hidden">
+        <div className="order-3 mb-1.5 mt-1.5 flex min-h-11 items-center gap-2 rounded-xl bg-black/25 px-1.5 py-1 sm:hidden">
           <div className="shrink-0">{chipsPill}</div>
           <p className="line-clamp-2 min-w-0 flex-1 text-[11px] leading-snug text-emerald-50/90" aria-live="polite">{s.message}</p>
           <div className="shrink-0">{chanceBadge}</div>
@@ -201,7 +201,7 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
       {modal === 'count' && <CountModal onClose={close} showChance={showChance} />}
       {modal === 'explain' && <ExplainModal onClose={close} />}
       {deckTip && !showOut && <DeckTipModal deckCount={s.deckCount} onChoose={chooseDeck} />}
-      {showOut && <OutOfChipsModal onChips={onOutOfChips} onHome={onHome} />}
+      {showOut && <OutOfChipsModal onChips={onOutOfChips} onHome={onHome} onQuiz={onQuiz} />}
     </>
   );
 }

@@ -104,7 +104,7 @@ export function HomeScreen({ go }: { go: (s: Screen) => void }) {
 
       <nav className="flex w-full flex-col gap-2 px-1 sm:gap-3 sm:px-2">
         <MenuButton primary icon="🃏" label="ゲームスタート" sub="CPU といっしょに遊びながら、カードを数えよう" onClick={() => go('game')} />
-        <MenuButton icon="💡" label="クイズモード" sub="点数・カウント・確率のクイズに挑戦" onClick={() => go('quiz')} />
+        <MenuButton icon="💡" label="クイズモード" sub="正解すると所持金がもらえる。スピードトレーニングも" onClick={() => go('quiz')} />
         <MenuButton
           icon="🏦"
           label="チップを用意する"

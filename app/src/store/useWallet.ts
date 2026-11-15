@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { useGameStore } from './useGameStore';
 import { useProfile } from './useProfile';
-import { canClaimBonus, dayKey, LOGIN_BONUS, loadWallet, MONEY_PER_CHIP, saveWallet } from './wallet';
+import { canClaimBonus, dayKey, grantStudy, LOGIN_BONUS, loadWallet, MONEY_PER_CHIP, saveWallet, studyLeft } from './wallet';
 
 type WalletStore = {
   money: number;
@@ -12,6 +12,10 @@ type WalletStore = {
   buyChips: (chips: number) => boolean;
   /** チップ → 所持金 */
   sellChips: (chips: number) => boolean;
+  studyDay: string | null;
+  studyEarned: number;
+  /** クイズ・トレーニングでかせぐ(1日の上限まで)。実際に増えた額を返す */
+  earnStudy: (amount: number) => number;
 };
 
 /** 所持金とログインボーナス。チップ(所持チップ)はゲームのストアの bankroll が持つ */
@@ -20,6 +24,17 @@ export const useWallet = create<WalletStore>((set, get) => {
   return {
     money: w.money,
     lastBonus: w.lastBonus,
+    studyDay: w.studyDay,
+    studyEarned: w.studyEarned,
+
+    earnStudy: (amount) => {
+      const g = grantStudy(get(), amount, dayKey(new Date()));
+      const money = get().money + g.granted;
+      set({ money, studyDay: g.studyDay, studyEarned: g.studyEarned });
+      saveWallet({ money, studyDay: g.studyDay, studyEarned: g.studyEarned });
+      if (g.granted > 0) useProfile.getState().record((st) => ({ studyTotal: st.studyTotal + g.granted }));
+      return g.granted;
+    },
 
     claimBonus: () => {
       const today = dayKey(new Date());
@@ -53,6 +68,9 @@ export const useWallet = create<WalletStore>((set, get) => {
     },
   };
 });
+
+/** 今日あとクイズ・トレーニングでかせげる所持金(画面表示用) */
+export const studyLeftToday = (w: { studyDay: string | null; studyEarned: number }) => studyLeft(w, dayKey(new Date()));
 
 /** 今日のボーナスがまだ受け取れるか(画面表示用) */
 export const bonusAvailable = (lastBonus: string | null) => canClaimBonus(lastBonus, dayKey(new Date()));

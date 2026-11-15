@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useProfile } from '../store/useProfile';
-import { bonusAvailable, useWallet } from '../store/useWallet';
-import { EXCHANGE_STEP, MONEY_PER_CHIP } from '../store/wallet';
+import { bonusAvailable, studyLeftToday, useWallet } from '../store/useWallet';
+import { EXCHANGE_STEP, MONEY_PER_CHIP, QUIZ_REWARD } from '../store/wallet';
 
 const COOL_DOWN_SEC = 5;
 const signed = (n: number) => `${n > 0 ? '+' : ''}${n.toLocaleString()}`;
@@ -10,10 +10,11 @@ const signed = (n: number) => `${n > 0 ? '+' : ''}${n.toLocaleString()}`;
  * チップがなくなったときの案内。ゲーム画面の中では交換させず、いったん画面を離れて冷静になってもらう。
  * 所持金かボーナスで用意できるなら「チップを用意する」画面へ、できなければトップへ案内する
  */
-export function OutOfChipsModal({ onChips, onHome }: { onChips: () => void; onHome: () => void }) {
+export function OutOfChipsModal({ onChips, onHome, onQuiz }: { onChips: () => void; onHome: () => void; onQuiz: () => void }) {
   const money = useWallet((w) => w.money);
   const canBonus = bonusAvailable(useWallet((w) => w.lastBonus));
   const stats = useProfile((p) => p.stats);
+  const studyLeft = studyLeftToday(useWallet());
   const canPrepare = money >= EXCHANGE_STEP * MONEY_PER_CHIP || canBonus;
   const [left, setLeft] = useState(COOL_DOWN_SEC);
 
@@ -45,10 +46,19 @@ export function OutOfChipsModal({ onChips, onHome }: { onChips: () => void; onHo
             </div>
             <h2 className="mt-1 text-2xl font-black tracking-widest">とほほ…</h2>
             <p className="mt-2 text-neutral-300">
-              チップも所持金も、なくなってしまいました。
+              チップがなくなり、所持金もチップにかえられるほど残っていません。
               <br />
               ログインボーナスは<b className="text-amber-200">1日1回</b>。あした、また受け取れます。
             </p>
+            {studyLeft > 0 ? (
+              <p className="mt-3 rounded-xl bg-emerald-900/40 px-3 py-2 text-xs leading-relaxed text-emerald-100 ring-1 ring-emerald-300/30">
+                💡 <b>クイズやトレーニングで所持金をかせげます!</b>
+                <br />
+                1問正解で +{QUIZ_REWARD}(今日あと {studyLeft.toLocaleString()} まで)
+              </p>
+            ) : (
+              <p className="mt-3 text-xs text-neutral-400">今日クイズでかせげる所持金も、上限に達しました。また、あした!</p>
+            )}
           </>
         )}
 
@@ -74,8 +84,13 @@ export function OutOfChipsModal({ onChips, onHome }: { onChips: () => void; onHo
               {left > 0 ? `ひと休み中… ${left}` : 'チップを用意する画面へ'}
             </button>
           )}
-          <button type="button" onClick={onHome} className={`rounded-xl py-2.5 font-bold ${canPrepare ? 'bg-white/10 hover:bg-white/20' : 'bg-sky-600 hover:bg-sky-500'}`}>
-            トップへもどる{canPrepare ? '' : '(クイズで練習しよう)'}
+          {!canPrepare && studyLeft > 0 && (
+            <button type="button" onClick={onQuiz} className="rounded-xl bg-emerald-600 py-2.5 font-black hover:bg-emerald-500">
+              クイズで所持金をかせぐ
+            </button>
+          )}
+          <button type="button" onClick={onHome} className="rounded-xl bg-white/10 py-2.5 font-bold hover:bg-white/20">
+            トップへもどる
           </button>
         </div>
       </div>

@@ -137,14 +137,14 @@ export function Table() {
         <DiscardTray count={s.discard.length} total={total} />
       </div>
 
-      <div className="flex flex-col items-center px-1 pb-5 sm:px-2 sm:pb-20 [@media(max-height:620px)]:pb-1">
+      <div className="flex flex-col items-center px-1 pb-1 sm:px-2 sm:pb-20 [@media(max-height:620px)]:pb-1">
         {/* ディーラー側のチップトレイは飾りなので、スマホでは出さない(操作ボタンを画面の上の方へ寄せるため) */}
         <div className="hidden sm:block">
           <ChipTray />
         </div>
 
         {/* ディーラーエリア */}
-        <div className="mt-1 flex min-h-[96px] flex-col items-center gap-1 sm:mt-3 sm:min-h-[130px] [@media(max-height:620px)]:mb-2">
+        <div className="mt-1 flex min-h-[92px] flex-col items-center gap-0.5 sm:mt-3 sm:min-h-[130px] [@media(max-height:620px)]:mb-2">
           <div className="flex min-h-[22px] items-center gap-1">
             {s.dealer.length > 0 && (
               <Badge className="bg-black/60 text-white">
@@ -157,8 +157,8 @@ export function Table() {
         </div>
 
         {/* 印字は、スマホではディーラーとプレイヤーの間の背景に敷く(高さを取らない) */}
-        <div className="relative h-2 w-full sm:h-auto [@media(max-height:620px)]:hidden">
-          <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 opacity-80 sm:static sm:translate-y-0 sm:opacity-100">
+        <div className="relative h-7 w-full sm:h-auto [@media(max-height:620px)]:hidden">
+          <div className="pointer-events-none absolute inset-x-0 top-0 opacity-80 sm:static sm:translate-y-0 sm:opacity-100">
             <TableText />
           </div>
         </div>
