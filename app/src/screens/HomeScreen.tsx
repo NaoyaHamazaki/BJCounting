@@ -22,21 +22,21 @@ function MenuButton({ label, sub, icon, onClick, primary, badge }: { label: stri
         sfx.chip();
         onClick();
       }}
-      className={`group flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left shadow-xl ring-1 transition hover:-translate-y-0.5 active:translate-y-0 ${
+      className={`group flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left sm:gap-4 sm:px-5 sm:py-4 shadow-xl ring-1 transition hover:-translate-y-0.5 active:translate-y-0 ${
         primary
           ? 'bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950 ring-amber-200/60 hover:from-amber-200'
           : 'bg-neutral-800/90 text-white ring-white/15 hover:bg-neutral-700'
       }`}
     >
-      <span className="text-3xl" aria-hidden>
+      <span className="text-2xl sm:text-3xl" aria-hidden>
         {icon}
       </span>
       <span className="flex-1">
-        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-lg font-black tracking-wide">
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-base font-black tracking-wide sm:text-lg">
           {label}
           {badge && <span className="bonus-badge rounded-full px-2 py-0.5 text-[10px] font-black tracking-normal">{badge}</span>}
         </span>
-        <span className={`block text-xs ${primary ? 'text-amber-900/80' : 'text-neutral-400'}`}>{sub}</span>
+        <span className={`block text-[11px] leading-snug sm:text-xs ${primary ? 'text-amber-900/80' : 'text-neutral-400'}`}>{sub}</span>
       </span>
       <span className="text-xl opacity-60 transition group-hover:translate-x-1" aria-hidden>
         ▶
@@ -53,10 +53,11 @@ export function HomeScreen({ go }: { go: (s: Screen) => void }) {
   const player = displayName(useProfile());
   const canBonus = bonusAvailable(lastBonus);
   return (
-    <div className="mx-auto flex min-h-[calc(100svh-2rem)] max-w-md flex-col items-center justify-center gap-6 py-6">
+    // iPhone タテ(Chrome)で「カードカウンティングってなに?」まで1画面に収まるように、スマホでは小さめにする
+    <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-1 sm:min-h-[calc(100svh-2rem)] sm:justify-center sm:gap-6 sm:py-6">
       <div className="relative flex flex-col items-center">
         {/* 背景に扇形に広げたカード */}
-        <div className="pointer-events-none absolute -top-6 flex opacity-80" aria-hidden>
+        <div className="pointer-events-none absolute -top-3 flex scale-75 opacity-80 sm:-top-6 sm:scale-100" aria-hidden>
           {(
             [
               ['A', 'Spades'],
@@ -70,21 +71,24 @@ export function HomeScreen({ go }: { go: (s: Screen) => void }) {
             </div>
           ))}
         </div>
-        <AppIcon size={112} className="relative mt-10 drop-shadow-[0_8px_20px_rgba(0,0,0,.6)]" />
-        <h1 className="mt-4 text-4xl font-black tracking-wide">
+        <div className="relative mt-7 sm:mt-10">
+          <AppIcon size={64} className="drop-shadow-[0_8px_20px_rgba(0,0,0,.6)] sm:hidden" />
+          <AppIcon size={112} className="hidden drop-shadow-[0_8px_20px_rgba(0,0,0,.6)] sm:block" />
+        </div>
+        <h1 className="mt-2 text-2xl font-black tracking-wide sm:mt-4 sm:text-4xl">
           確率ラボ <span className="text-amber-300">21</span>
         </h1>
-        <p className="mt-1 text-sm text-neutral-300">トランプで学ぶ、確率とカウント</p>
+        <p className="text-xs text-neutral-300 sm:mt-1 sm:text-sm">トランプで学ぶ、確率とカウント</p>
       </div>
 
       {/* プレイヤー名と、所持チップ・所持金 */}
-      <div className="-mb-3 text-xs text-neutral-400">
+      <div className="-mb-2 text-[11px] text-neutral-400 sm:-mb-3 sm:text-xs">
         ようこそ、<b className="text-neutral-200">{player}</b> さん
       </div>
       <button
         type="button"
         onClick={() => go('chips')}
-        className="flex items-center gap-4 rounded-full bg-black/40 px-5 py-2 text-sm ring-1 ring-white/15 hover:bg-black/60"
+        className="flex items-center gap-4 rounded-full bg-black/40 px-5 py-1 text-sm ring-1 sm:py-2 ring-white/15 hover:bg-black/60"
         aria-label="チップを用意する画面へ"
       >
         <span>
@@ -98,7 +102,7 @@ export function HomeScreen({ go }: { go: (s: Screen) => void }) {
         </span>
       </button>
 
-      <nav className="flex w-full flex-col gap-3 px-2">
+      <nav className="flex w-full flex-col gap-2 px-1 sm:gap-3 sm:px-2">
         <MenuButton primary icon="🃏" label="ゲームスタート" sub="CPU といっしょに遊びながら、カードを数えよう" onClick={() => go('game')} />
         <MenuButton icon="💡" label="クイズモード" sub="点数・カウント・確率のクイズに挑戦" onClick={() => go('quiz')} />
         <MenuButton
@@ -114,7 +118,7 @@ export function HomeScreen({ go }: { go: (s: Screen) => void }) {
       <button
         type="button"
         onClick={() => setGuide(true)}
-        className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-sky-200 ring-1 ring-sky-300/40 hover:bg-sky-500/10"
+        className="flex items-center gap-2 rounded-xl px-4 py-1.5 text-sm font-bold text-sky-200 sm:py-2 ring-1 ring-sky-300/40 hover:bg-sky-500/10"
       >
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-xs font-black text-white">?</span>
         カードカウンティングってなに?

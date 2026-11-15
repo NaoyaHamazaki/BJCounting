@@ -66,7 +66,7 @@ function PlayerSection() {
               setSaved(false);
             }}
             onKeyDown={(e) => e.key === 'Enter' && save()}
-            className="min-w-0 flex-1 rounded-md bg-neutral-800 px-3 py-2 text-sm font-bold ring-1 ring-white/15 placeholder:font-normal placeholder:text-neutral-500"
+            className="min-w-0 flex-1 rounded-md bg-neutral-800 px-3 py-2 text-base font-bold ring-1 ring-white/15 placeholder:font-normal placeholder:text-neutral-500"
           />
           <button type="button" onClick={save} className="rounded-md bg-amber-400 px-4 py-2 text-sm font-black text-amber-950 hover:bg-amber-300">
             保存
@@ -116,7 +116,7 @@ export function SettingsScreen({ onHome }: { onHome: () => void }) {
                 st.update({ deckCount: n });
                 game.setDeckCount(n);
               }}
-              className="rounded-md bg-neutral-800 px-3 py-1.5 font-bold ring-1 ring-white/15"
+              className="rounded-md bg-neutral-800 px-3 py-1.5 text-base font-bold ring-1 ring-white/15"
             >
               {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
@@ -138,7 +138,7 @@ export function SettingsScreen({ onHome }: { onHome: () => void }) {
           <Row label="chance? / chance! の表示" sub="オフにすると、自分の力だけで判断する練習になります">
             <Toggle on={st.showChance} onChange={(v) => st.update({ showChance: v })} label="チャンスの表示" />
           </Row>
-          <Row label="デッキ数のおすすめを表示" sub="3デッキ以上でゲームを始めたときに、1〜2デッキをすすめるメッセージ">
+          <Row label="デッキ数のおすすめを表示" sub="3デッキ以上で5回以上遊んだときに、1〜2デッキをすすめるメッセージ">
             <Toggle on={!st.hideDeckTip} onChange={(v) => st.update({ hideDeckTip: !v })} label="デッキ数のおすすめ" />
           </Row>
           {midRound && <p className="pb-3 text-[11px] text-amber-200/80">※ ラウンドの途中で変えると、そのラウンドは中止になり、賭けたチップは戻ります。</p>}

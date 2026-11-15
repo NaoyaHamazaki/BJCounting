@@ -87,11 +87,11 @@ function BetCircle({ amount, label, small }: { amount: number; label: string; sm
   return (
     <div
       className={`flex items-center justify-center rounded-full border-2 border-amber-100/55 shadow-[inset_0_0_14px_rgba(0,0,0,.35)] ${
-        small ? 'h-[50px] w-[50px] sm:h-[58px] sm:w-[58px]' : 'h-[76px] w-[76px] sm:h-[92px] sm:w-[92px]'
+        small ? 'h-[44px] w-[44px] sm:h-[58px] sm:w-[58px]' : 'h-[62px] w-[62px] sm:h-[92px] sm:w-[92px]'
       }`}
     >
       {amount > 0 ? (
-        <ChipStack amount={amount} size={small ? 22 : 34} />
+        <ChipStack amount={amount} size={small ? 20 : 28} />
       ) : (
         <span className="text-[9px] font-semibold tracking-widest text-amber-100/50">{label}</span>
       )}
@@ -106,7 +106,7 @@ function CpuSeatView({ cpu, active }: { cpu: CpuSeat; active: boolean }) {
         {cpu.cards.length > 0 && <Badge className="bg-black/60 text-white">{totalLabel(cpu.cards)}</Badge>}
         {cpu.result && <Badge className={RESULT_STYLE[cpu.result]}>{RESULT_TEXT[cpu.result]}</Badge>}
       </div>
-      <div className="flex min-h-[54px] items-end">
+      <div className="flex min-h-[50px] items-end sm:min-h-[54px]">
         <CardRow cards={cpu.cards} size="sm" />
       </div>
       <BetCircle amount={cpu.bet} label="CPU" small />
@@ -136,11 +136,11 @@ export function Table() {
         <DiscardTray count={s.discard.length} total={total} />
       </div>
 
-      <div className="flex flex-col items-center px-1 pb-12 sm:px-2 sm:pb-20">
+      <div className="flex flex-col items-center px-1 pb-5 sm:px-2 sm:pb-20 [@media(max-height:620px)]:pb-1">
         <ChipTray />
 
         {/* ディーラーエリア */}
-        <div className="mt-3 flex min-h-[110px] sm:min-h-[130px] flex-col items-center gap-1">
+        <div className="mt-1 flex min-h-[96px] flex-col items-center gap-1 sm:mt-3 sm:min-h-[130px] [@media(max-height:620px)]:mb-2">
           <div className="flex min-h-[22px] items-center gap-1">
             {s.dealer.length > 0 && (
               <Badge className="bg-black/60 text-white">
@@ -152,14 +152,16 @@ export function Table() {
           <CardRow cards={s.dealer} hideSecond={!s.holeRevealed} />
         </div>
 
-        <TableText />
+        <div className="-my-3 w-full sm:my-0 [@media(max-height:620px)]:hidden">
+          <TableText />
+        </div>
 
         {/* 座席: 左の CPU / 自分 / 右の CPU */}
-        <div className="mt-2 flex w-full items-end justify-center gap-0.5 sm:gap-4">
+        <div className="mt-1 flex w-full items-end justify-center gap-0.5 sm:mt-2 sm:gap-4">
           <div className="flex items-end gap-0.5 sm:gap-3">{leftSeats.map(seat)}</div>
 
           <div className="flex flex-col items-center gap-1">
-            <div className="flex min-h-[124px] sm:min-h-[140px] flex-wrap items-end justify-center gap-1 sm:gap-2">
+            <div className="flex min-h-[110px] sm:min-h-[140px] [@media(max-height:620px)]:min-h-[98px] flex-wrap items-end justify-center gap-1 sm:gap-2">
               {s.hands.map((h, i) => (
                 <UserHand key={i} hand={h} single={single} active={s.phase === 'playerTurn' && i === s.active && !single} />
               ))}

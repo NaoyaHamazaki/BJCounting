@@ -6,7 +6,7 @@ export function ScreenHeader({ title, onHome, children }: { title: string; onHom
   const sound = useSettings((s) => s.sound);
   const update = useSettings((s) => s.update);
   return (
-    <header className="mx-auto mb-3 flex max-w-[1000px] items-center justify-between gap-2">
+    <header className="mx-auto mb-2 flex sm:mb-3 max-w-[1000px] items-center justify-between gap-2">
       <div className="flex items-center gap-2">
         <button
           type="button"

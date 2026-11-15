@@ -28,7 +28,14 @@ export type Profile = {
   /** はじめて遊んだ日(YYYY-MM-DD) */
   since: string;
   stats: Stats;
+  /** この端末からのアクセス(画面を開いた回数、開いた日数、最後に開いた日)。画面には出さない */
+  visits: number;
+  visitDays: number;
+  lastVisit: string;
 };
+
+/** 1〜2デッキをすすめるのは、このラウンド数以上遊んだ人だけ(はじめての人には伝えない) */
+export const DECK_TIP_MIN_ROUNDS = 5;
 
 export const EMPTY_STATS: Stats = { invested: 0, cashedOut: 0, bonusTotal: 0, rounds: 0, wins: 0, losses: 0, pushes: 0, net: 0, bestWin: 0 };
 export const NAME_MAX = 12;
@@ -44,7 +51,7 @@ function randomId(): string {
 }
 
 export function newProfile(today: string, random: () => number = Math.random): Profile {
-  return { id: randomId(), guestNo: String(Math.floor(random() * 900000) + 100000), name: '', since: today, stats: { ...EMPTY_STATS } };
+  return { id: randomId(), guestNo: String(Math.floor(random() * 900000) + 100000), name: '', since: today, stats: { ...EMPTY_STATS }, visits: 0, visitDays: 0, lastVisit: '' };
 }
 
 /** 表示名。名前がなければ「ゲスト123456」 */
@@ -70,6 +77,11 @@ export function addRound(s: Stats, net: number): Stats {
   };
 }
 
+/** 画面を開いたことを記録する(日付が変わっていれば、開いた日数も1増やす) */
+export function addVisit(p: Profile, today: string): Profile {
+  return { ...p, visits: p.visits + 1, visitDays: p.visitDays + (p.lastVisit === today ? 0 : 1), lastVisit: today };
+}
+
 export function loadProfile(today: string): Profile {
   try {
     const raw = localStorage.getItem(KEY);
@@ -82,6 +94,9 @@ export function loadProfile(today: string): Profile {
           name: typeof p.name === 'string' ? cleanName(p.name) : '',
           since: typeof p.since === 'string' ? p.since : today,
           stats: { ...EMPTY_STATS, ...(p.stats ?? {}) },
+          visits: typeof p.visits === 'number' ? p.visits : 0,
+          visitDays: typeof p.visitDays === 'number' ? p.visitDays : 0,
+          lastVisit: typeof p.lastVisit === 'string' ? p.lastVisit : '',
         };
       }
     }

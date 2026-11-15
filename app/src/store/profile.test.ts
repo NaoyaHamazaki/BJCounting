@@ -21,3 +21,14 @@ describe('プレイヤー情報と記録', () => {
     expect(s).toMatchObject({ rounds: 4, wins: 2, losses: 1, pushes: 1, net: 175, bestWin: 150 });
   });
 });
+
+describe('端末からのアクセスの記録', () => {
+  it('開くたびに回数を足し、日付が変わったら日数も足す', async () => {
+    const { addVisit } = await import('./profile');
+    let p = newProfile('2026-11-16');
+    p = addVisit(p, '2026-11-16');
+    p = addVisit(p, '2026-11-16');
+    p = addVisit(p, '2026-11-17');
+    expect(p).toMatchObject({ visits: 3, visitDays: 2, lastVisit: '2026-11-17' });
+  });
+});

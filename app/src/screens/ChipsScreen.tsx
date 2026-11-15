@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Chip, CHIPS } from '../components/Chips';
 import { sfx } from '../sound/sfx';
 import { chipsAtStake, useGameStore } from '../store/useGameStore';
@@ -29,17 +29,9 @@ function Records({ chips, money }: { chips: number; money: number }) {
   const p = useProfile();
   const st = p.stats;
   return (
-    <section className="rounded-2xl bg-neutral-900/80 p-4 ring-1 ring-white/10">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl" aria-hidden>
-          📒
-        </span>
-        <div className="flex-1">
-          <div className="font-bold">これまでの記録</div>
-          <div className="text-xs text-neutral-400">
-            {displayName(p)}(はじめて遊んだ日 {p.since})
-          </div>
-        </div>
+    <div>
+      <div className="text-xs text-neutral-400">
+        {displayName(p)}(はじめて遊んだ日 {p.since})
       </div>
       <div className="mt-2">
         <StatRow label="チップにかえた所持金(投入)" value={fmt(st.invested)} />
@@ -55,7 +47,55 @@ function Records({ chips, money }: { chips: number; money: number }) {
         <StatRow label="受け取ったログインボーナス" value={fmt(st.bonusTotal)} />
       </div>
       <p className="mt-2 text-[11px] text-neutral-500">いまの持ち物:チップ {fmt(chips)} ・ 所持金 {fmt(money)}</p>
-    </section>
+    </div>
+  );
+}
+
+/** 下から出るシート(チップ交換・記録)。iPhone タテで画面が長くならないように、普段はしまっておく */
+function Sheet({ title, icon, onClose, children }: { title: string; icon: string; onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:p-4" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="max-h-[92svh] w-full max-w-xl overflow-y-auto rounded-t-2xl bg-neutral-900 p-4 text-neutral-100 shadow-2xl ring-1 ring-white/10 sm:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-base font-bold">
+            <span aria-hidden>{icon}</span>
+            {title}
+          </h2>
+          <button type="button" onClick={onClose} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold hover:bg-white/20">
+            とじる
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function OpenButton({ icon, label, sub, onClick }: { icon: string; label: string; sub: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="flex items-center gap-2 rounded-2xl bg-neutral-900/80 p-3 text-left ring-1 ring-white/10 hover:bg-neutral-800">
+      <span className="text-2xl" aria-hidden>
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold">{label}</span>
+        <span className="block truncate text-[11px] text-neutral-400">{sub}</span>
+      </span>
+      <span className="text-neutral-500" aria-hidden>
+        ▶
+      </span>
+    </button>
   );
 }
 
@@ -67,6 +107,9 @@ export function ChipsScreen({ go, reason }: { go: (s: Screen) => void; reason?: 
   const { money, lastBonus, claimBonus, buyChips, sellChips } = useWallet();
   const canBonus = bonusAvailable(lastBonus);
   const [notice, setNotice] = useState<string | null>(null);
+  const [panel, setPanel] = useState<'exchange' | 'records' | null>(null);
+  const closePanel = useCallback(() => setPanel(null), []);
+  const net = useProfile((p) => p.stats.net);
 
   // 交換したあとのチップ(スライダーの値)。null = 今のまま
   const [picked, setPicked] = useState<number | null>(null);
@@ -90,12 +133,13 @@ export function ChipsScreen({ go, reason }: { go: (s: Screen) => void; reason?: 
         : `チップ ${fmt(-delta)}枚 を、所持金 ${fmt(-delta * MONEY_PER_CHIP)} にもどしました`,
     );
     setPicked(null);
+    setPanel(null);
   };
 
   return (
     <>
       <ScreenHeader title="チップを用意する" onHome={() => go('home')} />
-      <div className="mx-auto max-w-xl space-y-4">
+      <div className="mx-auto max-w-xl space-y-3 sm:space-y-4">
         {reason === 'empty' && !broke && (
           <div className="rounded-2xl bg-rose-900/50 px-4 py-3 text-sm ring-1 ring-rose-300/30">
             <b>チップがなくなりました。</b>
@@ -104,8 +148,8 @@ export function ChipsScreen({ go, reason }: { go: (s: Screen) => void; reason?: 
         )}
 
         {broke && (
-          <div className="rounded-2xl bg-neutral-800 px-4 py-5 text-center ring-1 ring-white/10">
-            <div className="text-5xl" aria-hidden>
+          <div className="rounded-2xl bg-neutral-800 px-4 py-3 text-center ring-1 ring-white/10">
+            <div className="text-4xl" aria-hidden>
               😢
             </div>
             <div className="mt-1 text-2xl font-black tracking-widest text-neutral-200">とほほ…</div>
@@ -127,25 +171,25 @@ export function ChipsScreen({ go, reason }: { go: (s: Screen) => void; reason?: 
 
         {/* 所持チップと所持金 */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col items-center gap-1 rounded-2xl bg-neutral-900/80 p-4 ring-1 ring-white/10">
-            <span className="text-xs text-neutral-400">所持チップ</span>
-            <div className="flex h-9 items-center">
-              <Chip chip={CHIPS[3]} size={34} />
-            </div>
-            <span className="text-3xl font-black tabular-nums text-amber-300">{fmt(chips)}</span>
+          <div className="flex flex-col items-center gap-0.5 rounded-2xl bg-neutral-900/80 p-3 ring-1 ring-white/10">
+            <span className="flex items-center gap-1.5 text-xs text-neutral-400">
+              <Chip chip={CHIPS[3]} size={20} />
+              所持チップ
+            </span>
+            <span className="text-2xl font-black tabular-nums text-amber-300 sm:text-3xl">{fmt(chips)}</span>
             {atStake > 0 && <span className="text-[10px] text-neutral-500">ほかに テーブルに {fmt(atStake)}</span>}
           </div>
-          <div className="flex flex-col items-center gap-1 rounded-2xl bg-neutral-900/80 p-4 ring-1 ring-white/10">
-            <span className="text-xs text-neutral-400">所持金</span>
-            <div className="flex h-9 items-center text-3xl" aria-hidden>
-              👛
-            </div>
-            <span className="text-3xl font-black tabular-nums text-emerald-300">{fmt(money)}</span>
+          <div className="flex flex-col items-center gap-0.5 rounded-2xl bg-neutral-900/80 p-3 ring-1 ring-white/10">
+            <span className="flex items-center gap-1.5 text-xs text-neutral-400">
+              <span aria-hidden>👛</span>
+              所持金
+            </span>
+            <span className="text-2xl font-black tabular-nums text-emerald-300 sm:text-3xl">{fmt(money)}</span>
           </div>
         </div>
 
         {/* ログインボーナス */}
-        <section className="flex items-center gap-3 rounded-2xl bg-neutral-900/80 p-4 ring-1 ring-white/10">
+        <section className="flex items-center gap-3 rounded-2xl bg-neutral-900/80 p-3 ring-1 ring-white/10">
           <span className="text-3xl" aria-hidden>
             🎁
           </span>
@@ -170,20 +214,34 @@ export function ChipsScreen({ go, reason }: { go: (s: Screen) => void; reason?: 
           </button>
         </section>
 
-        {/* チップ交換: 1本のバーを、チップ(左)と所持金(右)に分ける。境目を動かして交換する */}
-        <section className="rounded-2xl bg-neutral-900/80 p-4 ring-1 ring-white/10">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl" aria-hidden>
-              🔄
-            </span>
-            <div className="flex-1">
-              <div className="font-bold">チップ交換</div>
-              <div className="text-xs text-neutral-400">
-                1チップ = 所持金 {MONEY_PER_CHIP}。{EXCHANGE_STEP}チップ(所持金 {fmt(EXCHANGE_STEP * MONEY_PER_CHIP)})ずつ交換できます
-              </div>
-            </div>
-          </div>
-          <p className="mt-3 rounded-lg bg-amber-400/10 px-3 py-2 text-xs leading-relaxed text-amber-100/90 ring-1 ring-amber-300/20">
+        {/* チップ交換と記録は、押すとシートで開く */}
+        <div className="grid grid-cols-2 gap-3">
+          <OpenButton icon="🔄" label="チップ交換" sub="所持金 ⇔ チップ" onClick={() => setPanel('exchange')} />
+          <OpenButton icon="📒" label="これまでの記録" sub={`勝ち負け ${signed(net)} チップ`} onClick={() => setPanel('records')} />
+        </div>
+
+        {notice && (
+          <p className="rounded-xl bg-emerald-900/40 px-4 py-2 text-center text-sm text-emerald-100 ring-1 ring-emerald-300/30" aria-live="polite">
+            {notice}
+          </p>
+        )}
+
+        {chips > 0 && (
+          <button
+            type="button"
+            onClick={() => go('game')}
+            className="w-full rounded-2xl bg-gradient-to-b from-amber-300 to-amber-500 py-3 text-base font-black text-amber-950 shadow-xl"
+          >
+            ゲームへ ▶
+          </button>
+        )}
+
+        {panel === 'exchange' && (
+          <Sheet title="チップ交換" icon="🔄" onClose={closePanel}>
+          <p className="text-[11px] text-neutral-400">
+            1チップ = 所持金 {MONEY_PER_CHIP}。{EXCHANGE_STEP}チップ(所持金 {fmt(EXCHANGE_STEP * MONEY_PER_CHIP)})ずつ交換できます
+          </p>
+          <p className="mt-2 rounded-lg bg-amber-400/10 px-3 py-2 text-xs leading-relaxed text-amber-100/90 ring-1 ring-amber-300/20">
             🔥 もっていくチップを決めておくと、熱くなって所持金を使い切る心配がありません。
           </p>
 
@@ -250,25 +308,13 @@ export function ChipsScreen({ go, reason }: { go: (s: Screen) => void; reason?: 
             </button>
           </div>
           {midRound && <p className="mt-2 text-[11px] text-neutral-500">※ ラウンド中に賭けているチップは、交換できません。</p>}
-        </section>
-
-        {notice && (
-          <p className="rounded-xl bg-emerald-900/40 px-4 py-2 text-center text-sm text-emerald-100 ring-1 ring-emerald-300/30" aria-live="polite">
-            {notice}
-          </p>
+          </Sheet>
         )}
-
-        {chips > 0 && (
-          <button
-            type="button"
-            onClick={() => go('game')}
-            className="w-full rounded-2xl bg-gradient-to-b from-amber-300 to-amber-500 py-3 text-base font-black text-amber-950 shadow-xl"
-          >
-            ゲームへ ▶
-          </button>
+        {panel === 'records' && (
+          <Sheet title="これまでの記録" icon="📒" onClose={closePanel}>
+            <Records chips={chips + atStake} money={money} />
+          </Sheet>
         )}
-
-        <Records chips={chips + atStake} money={money} />
 
         <p className="text-center text-[11px] leading-relaxed text-neutral-500">
           チップも所持金も、このアプリの中だけのものです。ほんとうのお金とは関係ありません。

@@ -24,7 +24,7 @@ function Btn({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`min-w-[76px] rounded-lg px-3 py-2.5 text-sm font-bold tracking-wide shadow transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35 ${tones[tone]}`}
+      className={`min-w-[72px] rounded-lg px-3 py-2 text-sm sm:py-2.5 font-bold tracking-wide shadow transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35 ${tones[tone]}`}
     >
       {children}
     </button>
@@ -40,7 +40,7 @@ export function Controls({ onNeedChips }: { onNeedChips: () => void }) {
   const chipRow = (
     <div className="flex flex-wrap justify-center gap-2">
       {CHIPS.map((c) => (
-        <Chip key={c.value} chip={c} size={46} onClick={() => s.addChip(c.value)} disabled={s.bankroll < c.value} />
+        <Chip key={c.value} chip={c} size={42} onClick={() => s.addChip(c.value)} disabled={s.bankroll < c.value} />
       ))}
     </div>
   );
@@ -104,5 +104,5 @@ export function Controls({ onNeedChips }: { onNeedChips: () => void }) {
     );
   }
 
-  return <div className="flex flex-col items-center gap-3">{body}</div>;
+  return <div className="flex flex-col items-center gap-2 sm:gap-3">{body}</div>;
 }

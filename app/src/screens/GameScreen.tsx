@@ -9,7 +9,12 @@ import { Table } from '../components/Table';
 import { chanceLevel, trueCountOf } from '../game/count';
 import { useSoundEffects } from '../sound/useSoundEffects';
 import { unseenCards, useGameStore } from '../store/useGameStore';
+import { DECK_TIP_MIN_ROUNDS } from '../store/profile';
+import { useProfile } from '../store/useProfile';
 import { useSettings } from '../store/useSettings';
+
+// デッキ数のおすすめは、1回の起動で1度だけ
+let deckTipShown = false;
 import { ScreenHeader } from './ScreenHeader';
 
 const fmt = (n: number) => (Number.isInteger(n) ? n.toLocaleString() : n.toFixed(1));
@@ -18,8 +23,20 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
   const s = useGameStore();
   const showChance = useSettings((x) => x.showChance);
   const updateSettings = useSettings((x) => x.update);
-  // 3デッキ以上で始めたら、1〜2デッキをすすめる(「次回以降表示しない」で出さない)
-  const [deckTip, setDeckTip] = useState(() => useGameStore.getState().deckCount >= 3 && !useSettings.getState().hideDeckTip);
+  // 3デッキ以上で、5ラウンド以上遊んだ人に、1〜2デッキをすすめる(はじめての人には出さない。1回の起動で1度だけ。「次回以降表示しない」で出さない)
+  const rounds = useProfile((p) => p.stats.rounds);
+  const hideDeckTip = useSettings((x) => x.hideDeckTip);
+  const [deckTip, setDeckTip] = useState(false);
+  const betweenRounds = s.phase === 'betting' || s.phase === 'roundOver';
+  useEffect(() => {
+    if (deckTipShown || hideDeckTip || s.deckCount < 3 || rounds < DECK_TIP_MIN_ROUNDS || !betweenRounds) return;
+    // 勝敗の演出を見せてから出す
+    const t = setTimeout(() => {
+      deckTipShown = true;
+      setDeckTip(true);
+    }, s.phase === 'roundOver' ? 1800 : 300);
+    return () => clearTimeout(t);
+  }, [hideDeckTip, s.deckCount, rounds, betweenRounds, s.phase]);
   const changeDecks = useCallback(
     (n: number) => {
       updateSettings({ deckCount: n });
@@ -61,7 +78,7 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
             value={s.deckCount}
             onChange={(e) => changeDecks(Number(e.target.value))}
             aria-label="デッキ数"
-            className="rounded-md bg-neutral-800 px-1.5 py-1.5 text-sm font-bold text-white ring-1 ring-white/15"
+            className="rounded-md bg-neutral-800 px-1.5 py-1 text-base font-bold text-white ring-1 ring-white/15"
           >
             {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
               <option key={n} value={n}>
@@ -85,7 +102,7 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
       <Table />
 
       {/* 所持チップ・メッセージ・解説・COUNT */}
-      <div className="mx-auto mt-3 flex max-w-[1000px] items-center justify-between gap-2">
+      <div className="mx-auto mt-2 flex max-w-[1000px] items-center justify-between gap-2 sm:mt-3">
         <div className="text-sm">
           <div className="text-[11px] text-neutral-400">所持チップ</div>
           <div className="text-lg font-extrabold tabular-nums text-amber-300">{fmt(s.bankroll)}</div>
@@ -124,7 +141,7 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
         </div>
       </div>
 
-      <div className="mx-auto mt-3 max-w-[1000px]">
+      <div className="mx-auto mt-2 max-w-[1000px] sm:mt-3">
         <Controls onNeedChips={() => setShowOut(true)} />
       </div>
 

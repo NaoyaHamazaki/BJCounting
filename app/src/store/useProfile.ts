@@ -1,7 +1,18 @@
 import { create } from 'zustand';
 import { useGameStore } from './useGameStore';
-import { addRound, cleanName, loadProfile, saveProfile, type Profile, type Stats } from './profile';
+import { addRound, addVisit, cleanName, loadProfile, saveProfile, type Profile, type Stats } from './profile';
 import { dayKey } from './wallet';
+
+const dataOf = (p: Profile): Profile => ({
+  id: p.id,
+  guestNo: p.guestNo,
+  name: p.name,
+  since: p.since,
+  stats: p.stats,
+  visits: p.visits,
+  visitDays: p.visitDays,
+  lastVisit: p.lastVisit,
+});
 
 type ProfileStore = Profile & {
   setName: (name: string) => void;
@@ -10,12 +21,13 @@ type ProfileStore = Profile & {
 };
 
 export const useProfile = create<ProfileStore>((set, get) => {
-  const save = () => {
-    const { id, guestNo, name, since, stats } = get();
-    saveProfile({ id, guestNo, name, since, stats });
-  };
+  const save = () => saveProfile(dataOf(get()));
+  // 画面を開くたびに、この端末からのアクセスを記録する
+  const today = dayKey(new Date());
+  const initial = addVisit(loadProfile(today), today);
+  saveProfile(initial);
   return {
-    ...loadProfile(dayKey(new Date())),
+    ...initial,
     setName: (name) => {
       set({ name: cleanName(name) });
       save();
@@ -34,7 +46,6 @@ useGameStore.subscribe((s, prev) => {
   if (s.phase === 'roundOver' && prev.phase !== 'roundOver') {
     const net = s.bankroll - s.roundStart;
     useProfile.setState((p) => ({ stats: addRound(p.stats, net) }));
-    const { id, guestNo, name, since, stats } = useProfile.getState();
-    saveProfile({ id, guestNo, name, since, stats });
+    saveProfile(dataOf(useProfile.getState()));
   }
 });

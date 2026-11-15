@@ -16,7 +16,7 @@ export default function App() {
   const home = () => go('home');
 
   return (
-    <div className="min-h-svh bg-[radial-gradient(ellipse_at_top,#1f2937,#030712)] px-2 pb-8 pt-3 text-white sm:px-4">
+    <div className="min-h-svh bg-[radial-gradient(ellipse_at_top,#1f2937,#030712)] px-2 pb-6 pt-2 text-white sm:px-4 sm:pb-8 sm:pt-3">
       {screen === 'home' && <HomeScreen go={go} />}
       {screen === 'game' && (
         <GameScreen

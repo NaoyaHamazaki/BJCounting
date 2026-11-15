@@ -327,7 +327,7 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
           <div className="h-full bg-amber-400 transition-[width]" style={{ width: `${(idx / questions.length) * 100}%` }} />
         </div>
 
-        <div className="felt rounded-2xl p-4 shadow-xl ring-4 ring-[#5a3418]">
+        <div className="felt rounded-2xl p-3 shadow-xl ring-4 ring-[#5a3418] sm:p-4">
           <div className="min-h-[170px]">
             {q.kind === 'point' && (
               <div className="flex flex-col items-center gap-3">
@@ -353,7 +353,7 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
                 type="button"
                 onClick={() => choose(c)}
                 disabled={picked !== null}
-                className={`rounded-xl bg-neutral-800 py-3 text-lg font-black ring-1 ring-white/15 transition hover:bg-neutral-700 ${state}`}
+                className={`rounded-xl bg-neutral-800 py-2 text-lg font-black ring-1 sm:py-3 ring-white/15 transition hover:bg-neutral-700 ${state}`}
               >
                 {c}
               </button>
@@ -363,7 +363,7 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
 
         {/* 正解・不正解と解説 */}
         {picked !== null && (
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-2">
             <div className="flex justify-center">
               <div className={`result-plate result-plate-${ok ? 'win' : 'lose'} rounded-2xl px-6 py-1 ${ok ? 'result-pop' : 'result-shake'}`}>
                 <span className={`${ok ? 'result-green' : 'result-red'} text-3xl font-black italic`}>{ok ? 'せいかい!' : 'ざんねん…'}</span>
@@ -374,11 +374,14 @@ export function QuizScreen({ onHome }: { onHome: () => void }) {
               <div className="mb-2 text-xs font-bold tracking-widest text-sky-300">かいせつ</div>
               <Explain q={q} />
             </div>
-            <div className="flex justify-center">
-              <button type="button" onClick={next} className="rounded-xl bg-sky-600 px-8 py-3 font-black hover:bg-sky-500">
-                {idx + 1 < questions.length ? 'つぎの問題 ▶' : '結果を見る ▶'}
-              </button>
-            </div>
+          </div>
+        )}
+        {/* 「つぎの問題」は解説が長くても画面の下に残す(iPhone タテで画面外に出ないように) */}
+        {picked !== null && (
+          <div className="sticky bottom-0 z-10 -mx-2 mt-3 bg-gradient-to-t from-neutral-950 via-neutral-950/90 to-transparent px-2 pb-3 pt-4">
+            <button type="button" onClick={next} className="w-full rounded-xl bg-sky-600 py-3 font-black shadow-lg hover:bg-sky-500">
+              {idx + 1 < questions.length ? 'つぎの問題 ▶' : '結果を見る ▶'}
+            </button>
           </div>
         )}
       </div>
