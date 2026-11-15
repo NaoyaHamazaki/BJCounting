@@ -42,7 +42,8 @@ function ResultBanner({ result, net, big }: { result: HandResult; net?: number; 
   const good = result === 'win' || result === 'blackjack';
   const tone = result === 'blackjack' ? 'result-gold' : result === 'win' ? 'result-green' : result === 'push' ? 'result-silver' : 'result-red';
   return (
-    <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 flex -translate-x-1/2 flex-col items-center">
+    // スマホでは自分のカードの上に重ねる(上に出すとディーラーのカードを隠すため)。PC では合計の数字の上
+    <div className="pointer-events-none absolute left-1/2 top-8 z-20 flex -translate-x-1/2 flex-col items-center sm:bottom-full sm:top-auto sm:mb-1">
       <div className={`relative ${good ? 'result-pop' : result === 'push' ? 'result-pop' : 'result-shake'}`}>
         {good && (
           <div className="absolute left-1/2 top-1/2" aria-hidden>
@@ -51,8 +52,8 @@ function ResultBanner({ result, net, big }: { result: HandResult; net?: number; 
             ))}
           </div>
         )}
-        <div className={`result-plate result-plate-${result} rounded-2xl ${big ? 'px-5 py-1 sm:px-7' : 'px-3 py-0.5'}`}>
-          <div className={`${tone} whitespace-nowrap font-black italic tracking-wider ${big ? 'text-4xl sm:text-5xl' : 'text-xl sm:text-2xl'}`}>
+        <div className={`result-plate result-plate-${result} rounded-2xl ${big ? 'px-3 py-0.5 sm:px-7 sm:py-1' : 'px-3 py-0.5'}`}>
+          <div className={`${tone} whitespace-nowrap font-black italic tracking-wider ${big ? 'text-2xl sm:text-5xl' : 'text-xl sm:text-2xl'}`}>
             {RESULT_TEXT[result]}
             {result === 'blackjack' || result === 'win' ? '!' : ''}
           </div>
@@ -87,7 +88,7 @@ function BetCircle({ amount, label, small }: { amount: number; label: string; sm
   return (
     <div
       className={`flex items-center justify-center rounded-full border-2 border-amber-100/55 shadow-[inset_0_0_14px_rgba(0,0,0,.35)] ${
-        small ? 'h-[44px] w-[44px] sm:h-[58px] sm:w-[58px]' : 'h-[62px] w-[62px] sm:h-[92px] sm:w-[92px]'
+        small ? 'h-[42px] w-[42px] sm:h-[58px] sm:w-[58px]' : 'h-[56px] w-[56px] sm:h-[92px] sm:w-[92px]'
       }`}
     >
       {amount > 0 ? (
@@ -137,7 +138,10 @@ export function Table() {
       </div>
 
       <div className="flex flex-col items-center px-1 pb-5 sm:px-2 sm:pb-20 [@media(max-height:620px)]:pb-1">
-        <ChipTray />
+        {/* ディーラー側のチップトレイは飾りなので、スマホでは出さない(操作ボタンを画面の上の方へ寄せるため) */}
+        <div className="hidden sm:block">
+          <ChipTray />
+        </div>
 
         {/* ディーラーエリア */}
         <div className="mt-1 flex min-h-[96px] flex-col items-center gap-1 sm:mt-3 sm:min-h-[130px] [@media(max-height:620px)]:mb-2">
@@ -152,8 +156,11 @@ export function Table() {
           <CardRow cards={s.dealer} hideSecond={!s.holeRevealed} />
         </div>
 
-        <div className="-my-3 w-full sm:my-0 [@media(max-height:620px)]:hidden">
-          <TableText />
+        {/* 印字は、スマホではディーラーとプレイヤーの間の背景に敷く(高さを取らない) */}
+        <div className="relative h-2 w-full sm:h-auto [@media(max-height:620px)]:hidden">
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 opacity-80 sm:static sm:translate-y-0 sm:opacity-100">
+            <TableText />
+          </div>
         </div>
 
         {/* 座席: 左の CPU / 自分 / 右の CPU */}

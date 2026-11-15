@@ -99,50 +99,55 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
         </button>
       </ScreenHeader>
 
-      <Table />
-
-      {/* 所持チップ・メッセージ・解説・COUNT */}
-      <div className="mx-auto mt-2 flex max-w-[1000px] items-center justify-between gap-2 sm:mt-3">
-        <div className="text-sm">
-          <div className="text-[11px] text-neutral-400">所持チップ</div>
-          <div className="text-lg font-extrabold tabular-nums text-amber-300">{fmt(s.bankroll)}</div>
-        </div>
-        <p className="flex-1 text-center text-xs text-emerald-50/90 sm:text-sm" aria-live="polite">
-          {s.justShuffled && s.phase === 'betting' && <span className="mr-1 rounded bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold">SHUFFLED</span>}
-          {s.message}
-        </p>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setModal('explain')}
-            disabled={s.roundLog.length === 0}
-            className="rounded-lg bg-neutral-700 px-3 py-2.5 text-sm font-extrabold tracking-wide shadow-lg ring-1 ring-white/15 hover:bg-neutral-600 disabled:opacity-35"
-            title="このラウンドのカウントの手順を、1枚ずつ解説します"
-          >
-            解説
-          </button>
-          <div className="relative">
+      {/* スマホでは、所持チップ・解説・COUNT をテーブルの上に置き、画面の下は操作ボタンだけにする(PC ではテーブルの下) */}
+      <div className="flex flex-col">
+        <div className="mx-auto mb-2 flex w-full max-w-[1000px] items-center justify-between gap-2 sm:order-2 sm:mb-0 sm:mt-3">
+          <div className="flex items-baseline gap-1.5 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
+            <span className="text-[11px] text-neutral-400">所持チップ</span>
+            <span className="text-base font-extrabold tabular-nums text-amber-300 sm:text-lg">{fmt(s.bankroll)}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             {chance > 0 && (
               <span
-                className={`${chance === 2 ? 'chance-badge' : 'chance-badge-maybe'} pointer-events-none absolute -top-5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full py-0.5 pl-1 pr-2.5 text-xs font-black italic tracking-wide`}
+                className={`${chance === 2 ? 'chance-badge-inline' : 'chance-badge-maybe'} pointer-events-none flex items-center gap-1 whitespace-nowrap rounded-full py-0.5 pl-1 pr-2 text-[11px] font-black italic tracking-wide`}
               >
-                <ChanceIcon kind={chance === 2 ? 'sure' : 'maybe'} size={18} />
+                <ChanceIcon kind={chance === 2 ? 'sure' : 'maybe'} size={16} />
                 {chance === 2 ? 'chance!' : 'chance?'}
               </span>
             )}
             <button
               type="button"
+              onClick={() => setModal('explain')}
+              disabled={s.roundLog.length === 0}
+              className="rounded-lg bg-neutral-700 px-3 py-2 text-sm font-extrabold tracking-wide shadow-lg ring-1 ring-white/15 hover:bg-neutral-600 disabled:opacity-35 sm:py-2.5"
+              title="このラウンドのカウントの手順を、1枚ずつ解説します"
+            >
+              解説
+            </button>
+            <button
+              type="button"
               onClick={() => setModal('count')}
-              className={`rounded-lg bg-gradient-to-b from-sky-500 to-sky-700 px-4 py-2.5 text-sm font-extrabold tracking-widest shadow-lg ring-1 ring-sky-300/40 hover:from-sky-400 ${chance === 2 ? 'chance-glow' : ''}`}
+              className={`rounded-lg bg-gradient-to-b from-sky-500 to-sky-700 px-4 py-2 text-sm font-extrabold tracking-widest shadow-lg ring-1 ring-sky-300/40 hover:from-sky-400 sm:py-2.5 ${chance === 2 ? 'chance-glow' : ''}`}
             >
               COUNT
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="mx-auto mt-2 max-w-[1000px] sm:mt-3">
-        <Controls onNeedChips={() => setShowOut(true)} />
+        <div className="sm:order-1">
+          <Table />
+        </div>
+
+        <p className="order-3 mx-auto mt-1.5 min-h-[2.5em] max-w-[1000px] text-center text-xs leading-snug text-emerald-50/90 sm:mt-2 sm:min-h-0 sm:text-sm" aria-live="polite">
+          {s.justShuffled && s.phase === 'betting' && <span className="mr-1 rounded bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold">SHUFFLED</span>}
+          {s.message}
+        </p>
+
+        <div className="order-4 mx-auto mt-1 w-full max-w-[1000px] sm:mt-3">
+          <Controls onNeedChips={() => setShowOut(true)} />
+        </div>
+        {/* 画面のいちばん下(約1cm)には、よく押すボタンを置かない */}
+        <div className="order-5 h-5 sm:hidden" aria-hidden />
       </div>
 
       {modal === 'count' && <CountModal onClose={close} showChance={showChance} />}
