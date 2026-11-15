@@ -1,0 +1,73 @@
+// チップと所持金のしくみ(純粋な計算と、ブラウザへの保存)
+
+/** はじめて遊ぶ人の所持チップ */
+export const INITIAL_CHIPS = 1000;
+/** ログインボーナス(所持金)。1日1回 */
+export const LOGIN_BONUS = 20000;
+/** 1チップ = 所持金 20 */
+export const MONEY_PER_CHIP = 20;
+
+export type Wallet = {
+  /** 所持チップ(テーブルで使える分。配札前に置いたベットも含む) */
+  chips: number;
+  /** 所持金(単位なし) */
+  money: number;
+  /** 最後にログインボーナスを受け取った日(YYYY-MM-DD、端末の日付) */
+  lastBonus: string | null;
+};
+
+export const DEFAULT_WALLET: Wallet = { chips: INITIAL_CHIPS, money: 0, lastBonus: null };
+
+const KEY = 'prob21-wallet';
+
+/** 端末の日付を YYYY-MM-DD にする(日付が変わったら、またボーナスを受け取れる) */
+export function dayKey(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+export function canClaimBonus(lastBonus: string | null, today: string): boolean {
+  return lastBonus !== today;
+}
+
+/** 所持金で買えるチップの最大数 */
+export function maxChipsFor(money: number): number {
+  return Math.floor(money / MONEY_PER_CHIP);
+}
+
+/** チップ ⇔ 所持金 の交換。chips > 0 は所持金→チップ、chips < 0 はチップ→所持金。足りなければ null */
+export function exchange(w: Pick<Wallet, 'chips' | 'money'>, chips: number): Pick<Wallet, 'chips' | 'money'> | null {
+  if (!Number.isInteger(chips) || chips === 0) return null;
+  const money = w.money - chips * MONEY_PER_CHIP;
+  const nextChips = w.chips + chips;
+  if (money < 0 || nextChips < 0) return null;
+  return { chips: nextChips, money };
+}
+
+function isNum(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v) && v >= 0;
+}
+
+export function loadWallet(): Wallet {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return DEFAULT_WALLET;
+    const w = JSON.parse(raw) as Partial<Wallet>;
+    return {
+      chips: isNum(w.chips) ? w.chips : DEFAULT_WALLET.chips,
+      money: isNum(w.money) ? w.money : DEFAULT_WALLET.money,
+      lastBonus: typeof w.lastBonus === 'string' ? w.lastBonus : null,
+    };
+  } catch {
+    return DEFAULT_WALLET;
+  }
+}
+
+/** 一部だけ書きかえて保存する(チップはゲーム、所持金は銀行の画面から書くため) */
+export function saveWallet(patch: Partial<Wallet>) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify({ ...loadWallet(), ...patch }));
+  } catch {
+    /* 保存できなくても動作は続ける */
+  }
+}
