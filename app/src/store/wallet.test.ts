@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canClaimBonus, dayKey, exchange, maxChipsFor, MONEY_PER_CHIP } from './wallet';
+import { canClaimBonus, dayKey, exchange, exchangeRange, maxChipsFor, MONEY_PER_CHIP } from './wallet';
 
 describe('チップと所持金', () => {
   it('1チップ = 所持金20。ログインボーナス20000で1000チップ買える', () => {
@@ -23,5 +23,11 @@ describe('チップと所持金', () => {
     expect(canClaimBonus(null, today)).toBe(true);
     expect(canClaimBonus(today, today)).toBe(false);
     expect(canClaimBonus(today, dayKey(new Date(2026, 10, 17, 0, 1)))).toBe(true);
+  });
+  it('チップ交換のスライダーは100枚ずつ。端数のチップと、2,000に満たない所持金は残る', () => {
+    expect(exchangeRange(500, 8000)).toEqual({ min: 0, max: 900 });
+    expect(exchangeRange(537, 3999)).toEqual({ min: 37, max: 637 });
+    expect(exchangeRange(40, 1999)).toEqual({ min: 40, max: 40 });
+    expect(exchangeRange(0, 20000)).toEqual({ min: 0, max: 1000 });
   });
 });

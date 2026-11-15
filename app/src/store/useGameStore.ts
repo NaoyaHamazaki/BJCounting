@@ -44,13 +44,15 @@ export type GameData = {
   justShuffled: boolean;
   /** このラウンドで表になったカードの記録(解説モーダル用) */
   roundLog: LogEntry[];
+  /** 配札したときの手持ちチップ(ベットを含む)。精算後の手持ちとの差が、そのラウンドの勝ち負け */
+  roundStart: number;
 };
 
 type Actions = {
   setDeckCount: (n: number) => void;
   setCpuCount: (n: number) => void;
   reset: () => void;
-  /** 銀行でチップを交換したとき。delta > 0 で増やす、< 0 で減らす(足りなければ何もしない) */
+  /** チップ交換をしたとき。delta > 0 で増やす、< 0 で減らす(足りなければ何もしない) */
   adjustChips: (delta: number) => boolean;
   addChip: (v: number) => void;
   clearBet: () => void;
@@ -104,6 +106,7 @@ export function initialData(deckCount = DEFAULT_DECKS, cpuCount = DEFAULT_CPUS):
     message: 'チップを置いて DEAL を押してください',
     justShuffled: false,
     roundLog: [],
+    roundStart: 0,
   };
 }
 
@@ -450,6 +453,7 @@ export const useGameStore = create<GameStore>((set, get) => {
       roundToken++;
       const offerInsurance = mutate((d) => {
         const bet = d.bet;
+        d.roundStart = d.bankroll + bet;
         d.lastBet = bet;
         d.bet = 0;
         d.insurance = 0;

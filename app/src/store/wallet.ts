@@ -63,11 +63,25 @@ export function loadWallet(): Wallet {
   }
 }
 
-/** 一部だけ書きかえて保存する(チップはゲーム、所持金は銀行の画面から書くため) */
+/** 一部だけ書きかえて保存する(チップはゲーム、所持金はチップを用意する画面から書くため) */
 export function saveWallet(patch: Partial<Wallet>) {
   try {
     localStorage.setItem(KEY, JSON.stringify({ ...loadWallet(), ...patch }));
   } catch {
     /* 保存できなくても動作は続ける */
   }
+}
+
+/** チップ交換のスライダーの1目盛り(チップの枚数)。100チップ = 所持金 2,000 */
+export const EXCHANGE_STEP = 100;
+
+/**
+ * チップ交換のスライダーで選べる「交換後のチップ」の範囲。
+ * 今のチップから 100枚ずつ増減する。100枚に満たない端数はチップのまま残る
+ */
+export function exchangeRange(chips: number, money: number): { min: number; max: number } {
+  return {
+    min: chips % EXCHANGE_STEP,
+    max: chips + Math.floor(money / (EXCHANGE_STEP * MONEY_PER_CHIP)) * EXCHANGE_STEP,
+  };
 }

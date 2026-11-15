@@ -1,4 +1,7 @@
+import { useState } from 'react';
+import { displayName, NAME_MAX } from '../store/profile';
 import { MAX_CPUS, useGameStore } from '../store/useGameStore';
+import { useProfile } from '../store/useProfile';
 import { useSettings, type QuizSpeed } from '../store/useSettings';
 import { ScreenHeader } from './ScreenHeader';
 
@@ -34,6 +37,50 @@ function Segment<T extends string | number>({ value, options, onChange }: { valu
   );
 }
 
+/** プレイヤー名(ログインなし。このブラウザに保存) */
+function PlayerSection() {
+  const p = useProfile();
+  const [draft, setDraft] = useState(p.name);
+  const [saved, setSaved] = useState(false);
+  const save = () => {
+    p.setName(draft);
+    setDraft(useProfile.getState().name);
+    setSaved(true);
+  };
+  return (
+    <section className="rounded-2xl bg-neutral-900/80 px-4 py-1 ring-1 ring-white/10">
+      <h2 className="pt-3 text-xs font-bold tracking-widest text-amber-300">プレイヤー</h2>
+      <div className="border-b border-white/10 py-3">
+        <label htmlFor="player-name" className="text-sm font-bold">
+          プレイヤー名
+        </label>
+        <div className="text-[11px] text-neutral-400">空のままなら「ゲスト{p.guestNo}」と表示します。本名は入れないでね({NAME_MAX}文字まで)</div>
+        <div className="mt-2 flex gap-2">
+          <input
+            id="player-name"
+            value={draft}
+            maxLength={NAME_MAX * 2}
+            placeholder={`ゲスト${p.guestNo}`}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              setSaved(false);
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && save()}
+            className="min-w-0 flex-1 rounded-md bg-neutral-800 px-3 py-2 text-sm font-bold ring-1 ring-white/15 placeholder:font-normal placeholder:text-neutral-500"
+          />
+          <button type="button" onClick={save} className="rounded-md bg-amber-400 px-4 py-2 text-sm font-black text-amber-950 hover:bg-amber-300">
+            保存
+          </button>
+        </div>
+        {saved && <div className="mt-1 text-[11px] text-emerald-300">「{displayName(useProfile.getState())}」で保存しました</div>}
+      </div>
+      <Row label="ゲスト番号" sub="このブラウザに自動でつけた番号です">
+        <span className="font-mono text-sm font-bold tabular-nums text-neutral-200">{p.guestNo}</span>
+      </Row>
+    </section>
+  );
+}
+
 function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button
@@ -58,6 +105,7 @@ export function SettingsScreen({ onHome }: { onHome: () => void }) {
     <>
       <ScreenHeader title="設定" onHome={onHome} />
       <div className="mx-auto max-w-xl space-y-4">
+        <PlayerSection />
         <section className="rounded-2xl bg-neutral-900/80 px-4 py-1 ring-1 ring-white/10">
           <h2 className="pt-3 text-xs font-bold tracking-widest text-amber-300">ゲーム</h2>
           <Row label="デッキ数" sub="確率の学習には 1〜2デッキがおすすめ。変えると、シャッフルし直してカウントは0に戻ります">

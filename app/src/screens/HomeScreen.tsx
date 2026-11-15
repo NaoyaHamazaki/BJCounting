@@ -5,7 +5,9 @@ import { PlayingCard } from '../components/PlayingCard';
 import { rankValue } from '../game/deck';
 import type { Card, Rank, Suit } from '../game/types';
 import { sfx } from '../sound/sfx';
+import { displayName } from '../store/profile';
 import { chipsAtStake, useGameStore } from '../store/useGameStore';
+import { useProfile } from '../store/useProfile';
 import { bonusAvailable, useWallet } from '../store/useWallet';
 
 export type Screen = 'home' | 'game' | 'quiz' | 'settings' | 'chips';
@@ -20,7 +22,7 @@ function MenuButton({ label, sub, icon, onClick, primary, badge }: { label: stri
         sfx.chip();
         onClick();
       }}
-      className={`group relative flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left shadow-xl ring-1 transition hover:-translate-y-0.5 active:translate-y-0 ${
+      className={`group flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left shadow-xl ring-1 transition hover:-translate-y-0.5 active:translate-y-0 ${
         primary
           ? 'bg-gradient-to-b from-amber-300 to-amber-500 text-amber-950 ring-amber-200/60 hover:from-amber-200'
           : 'bg-neutral-800/90 text-white ring-white/15 hover:bg-neutral-700'
@@ -30,8 +32,10 @@ function MenuButton({ label, sub, icon, onClick, primary, badge }: { label: stri
         {icon}
       </span>
       <span className="flex-1">
-        <span className="block text-lg font-black tracking-wide">{label}</span>
-        {badge && <span className="chance-badge absolute -top-2 right-3 rounded-full px-2.5 py-0.5 text-[11px] font-black">{badge}</span>}
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-lg font-black tracking-wide">
+          {label}
+          {badge && <span className="bonus-badge rounded-full px-2 py-0.5 text-[10px] font-black tracking-normal">{badge}</span>}
+        </span>
         <span className={`block text-xs ${primary ? 'text-amber-900/80' : 'text-neutral-400'}`}>{sub}</span>
       </span>
       <span className="text-xl opacity-60 transition group-hover:translate-x-1" aria-hidden>
@@ -46,6 +50,7 @@ export function HomeScreen({ go }: { go: (s: Screen) => void }) {
   // テーブルに賭けているチップも、手持ちとして見せる
   const chips = useGameStore((s) => s.bankroll + chipsAtStake(s));
   const { money, lastBonus } = useWallet();
+  const player = displayName(useProfile());
   const canBonus = bonusAvailable(lastBonus);
   return (
     <div className="mx-auto flex min-h-[calc(100svh-2rem)] max-w-md flex-col items-center justify-center gap-6 py-6">
@@ -72,7 +77,10 @@ export function HomeScreen({ go }: { go: (s: Screen) => void }) {
         <p className="mt-1 text-sm text-neutral-300">トランプで学ぶ、確率とカウント</p>
       </div>
 
-      {/* 所持チップと所持金 */}
+      {/* プレイヤー名と、所持チップ・所持金 */}
+      <div className="-mb-3 text-xs text-neutral-400">
+        ようこそ、<b className="text-neutral-200">{player}</b> さん
+      </div>
       <button
         type="button"
         onClick={() => go('chips')}

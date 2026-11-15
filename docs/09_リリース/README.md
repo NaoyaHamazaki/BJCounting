@@ -15,7 +15,7 @@ Railway(2026-11-15 オーナー指定)。手順は `C:\Users\right\OneDrive\Desk
 |---|---|---|
 | 1 | Dockerfile、.dockerignore、railway.json、nginx の設定を置く(04 を参照) | 済(2026-11-15) |
 | 2 | プロジェクト直下で git リポジトリを作り、GitHub に push する | 済(2026-11-16。https://github.com/NaoyaHamazaki/BJCounting 、main ブランチ) |
-| 3 | Railway で New Project → Deploy from GitHub repo → リポジトリを選ぶ | 未(オーナーが Railway の画面で行う) |
+| 3 | Railway で New Project → Deploy from GitHub repo → リポジトリを選ぶ | 済(2026-11-16、オーナー) |
 | 4 | Settings → Networking → Generate Domain で URL を発行する | 未 |
 | 5 | 公開後の確認:Deployments が Active、Deploy Logs に nginx の起動ログ、PC とスマホで画面が出る、アイコンが出る | 未 |
 | 6 | Serverless:Railway の画面でオンになっているか確認し、10〜15分放置して Sleeping になること、停止中から数秒で表示されることを確認 | 未 |

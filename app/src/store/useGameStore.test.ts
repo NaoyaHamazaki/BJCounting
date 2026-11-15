@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { runningCountOf } from '../game/count';
 import { rankValue } from '../game/deck';
 import type { Card, Rank } from '../game/types';
+import { EMPTY_STATS } from './profile';
 import { chipsAtStake, INITIAL_BANKROLL, initialData, unseenCards, useGameStore } from './useGameStore';
+import { useProfile } from './useProfile';
 
 let n = 0;
 const c = (rank: Rank): Card => ({ id: `s${n++}`, suit: 'Hearts', rank, value: rankValue(rank) });
@@ -118,7 +120,7 @@ describe('ラウンドの進行(結合)', () => {
     expect(st().runningCount).toBe(0);
   });
 
-  it('銀行での交換: チップを増減でき、足りなければ減らせない', () => {
+  it('チップ交換: チップを増減でき、足りなければ減らせない', () => {
     expect(st().adjustChips(50)).toBe(true);
     expect(st().bankroll).toBe(INITIAL_BANKROLL + 50);
     expect(st().adjustChips(-(INITIAL_BANKROLL + 51))).toBe(false);
@@ -214,5 +216,26 @@ describe('テーブルに置いているチップ', () => {
     const hand = { cards: [], bet: 40, doubled: false, done: false, splitAces: false };
     expect(chipsAtStake({ ...base, phase: 'playerTurn', hands: [hand], insurance: 20 })).toBe(60);
     expect(chipsAtStake({ ...base, phase: 'roundOver', hands: [hand] })).toBe(0);
+  });
+});
+
+describe('記録(結合)', () => {
+  it('精算したラウンドの勝ち負けが記録に足され、中止したラウンドは数えない', async () => {
+    useProfile.setState({ stats: { ...EMPTY_STATS } });
+    // プレイヤー 10+9=19、ディーラー 10+7=17 → 勝ち
+    stackShoe(['10', '10', '9', '7']);
+    st().addChip(25);
+    st().deal();
+    st().stand();
+    await new Promise((r) => setTimeout(r, 1500));
+    expect(st().phase).toBe('roundOver');
+    expect(useProfile.getState().stats).toMatchObject({ rounds: 1, wins: 1, net: 25 });
+    // 配札してからリセット → 数えない
+    st().nextRound();
+    stackShoe(['10', '10', '9', '7']);
+    st().addChip(25);
+    st().deal();
+    st().reset();
+    expect(useProfile.getState().stats.rounds).toBe(1);
   });
 });

@@ -120,6 +120,12 @@ body {
   box-shadow: 0 0 0 1.5px #fff7, 0 0 14px rgba(251, 191, 36, 0.9);
   animation: chance-bounce 1.1s ease-in-out infinite;
 }
+/* トップのメニューの「ボーナス」の札(位置を動かさず、光るだけ) */
+.bonus-badge {
+  color: #451a03;
+  background: linear-gradient(180deg, #fef3c7, #fbbf24);
+  box-shadow: 0 0 0 1px #fff7, 0 0 6px rgba(251, 191, 36, 0.6);
+}
 /* chance?(もう少し): 青で、弾まずに表示 */
 .chance-badge-maybe {
   color: #0c4a6e;

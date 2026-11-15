@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Controls } from '../components/Controls';
 import { CountModal } from '../components/CountModal';
 import { DeckTipModal } from '../components/DeckTipModal';
+import { OutOfChipsModal } from '../components/OutOfChipsModal';
 import { ExplainModal } from '../components/ExplainModal';
 import { ChanceIcon } from '../components/Icons';
 import { Table } from '../components/Table';
@@ -35,13 +36,17 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
     [changeDecks, updateSettings],
   );
 
-  // チップがなくなったら、少し待って(負けの演出を見せてから)チップを用意する画面へ
+  // チップがなくなったら、少し待って(負けの演出を見せてから)案内を出す。ゲーム画面では交換させず、別の画面へ移ってもらう
   const outOfChips = (s.phase === 'betting' || s.phase === 'roundOver') && s.bankroll + s.bet < 1;
+  const [showOut, setShowOut] = useState(false);
   useEffect(() => {
     if (!outOfChips) return;
-    const t = setTimeout(onOutOfChips, s.phase === 'roundOver' ? 2400 : 800);
-    return () => clearTimeout(t);
-  }, [outOfChips, onOutOfChips, s.phase]);
+    const t = setTimeout(() => setShowOut(true), s.phase === 'roundOver' ? 2400 : 600);
+    return () => {
+      clearTimeout(t);
+      setShowOut(false);
+    };
+  }, [outOfChips, s.phase]);
   const [modal, setModal] = useState<'count' | 'explain' | null>(null);
   const close = useCallback(() => setModal(null), []);
   useSoundEffects();
@@ -120,12 +125,13 @@ export function GameScreen({ onHome, onOutOfChips }: { onHome: () => void; onOut
       </div>
 
       <div className="mx-auto mt-3 max-w-[1000px]">
-        <Controls onNeedChips={onOutOfChips} />
+        <Controls onNeedChips={() => setShowOut(true)} />
       </div>
 
       {modal === 'count' && <CountModal onClose={close} showChance={showChance} />}
       {modal === 'explain' && <ExplainModal onClose={close} />}
-      {deckTip && <DeckTipModal deckCount={s.deckCount} onChoose={chooseDeck} />}
+      {deckTip && !showOut && <DeckTipModal deckCount={s.deckCount} onChoose={chooseDeck} />}
+      {showOut && <OutOfChipsModal onChips={onOutOfChips} onHome={onHome} />}
     </>
   );
 }
